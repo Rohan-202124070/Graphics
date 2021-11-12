@@ -21,6 +21,8 @@ cbuffer cbChangesEveryFrame : register( b1 )
     matrix WorldViewProj;
     matrix World;
     float Puffiness;
+	float4 Time;
+	float4 Frequence;
 };
 
 struct VS_INPUT
@@ -59,24 +61,49 @@ struct PS_INPUT
 //    return output;
 //}
 
+//PS_INPUT VS(VS_INPUT input)
+//{
+//	float magnitude = 3.5f;
+
+//	PS_INPUT output = (PS_INPUT) 0;
+//	input.Pos += input.Norm * Puffiness;
+
+//	output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+//	float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
+    
+//	float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
+    
+//	output.Pos += scale * float4(vNormalWorldSpace, 0);
+
+//	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+//	output.Diffuse.rgb = fLighting;
+//	output.Diffuse.a = 1.0f;
+
+//	output.Tex = input.Tex;
+//	return output;
+//}
+
+
 PS_INPUT VS(VS_INPUT input)
 {
-    PS_INPUT output = (PS_INPUT) 0;
-    input.Pos += input.Norm * Puffiness;
+	float magnitude = 3.5f;
 
-    output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
-    float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
+	PS_INPUT output = (PS_INPUT) 0;
+	input.Pos += input.Norm * Puffiness;
+
+	output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+	float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
     
-    float scale = 10 * smoothstep(140, 160, output.Pos.z) * (sin() + 0.5);
+	float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
     
-    output.Pos += 0.3 * float4(vNormalWorldSpace, 0);
+	output.Pos += scale * float4(vNormalWorldSpace, 0);
 
-    float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
-    output.Diffuse.rgb = fLighting;
-    output.Diffuse.a = 1.0f;
+	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+	output.Diffuse.rgb = fLighting;
+	output.Diffuse.a = 1.0f;
 
-    output.Tex = input.Tex;
-    return output;
+	output.Tex = input.Tex;
+	return output;
 }
 
 
