@@ -1,0 +1,9 @@
+﻿  DXUT.cpp
+  DDSTextureLoader.cpp
+  DXErr.cpp
+  DXUTDevice11.cpp
+  DXUTmisc.cpp
+  Screengrab.cpp
+  WICTextureLoader.cpp
+  Generating Code...
+  DXUT_2019_Win10.vcxproj -> \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\DXUT_Tutorials\DXUT\Core\Bin\Desktop_2019_Win10\Win32\Debug\DXUT.lib

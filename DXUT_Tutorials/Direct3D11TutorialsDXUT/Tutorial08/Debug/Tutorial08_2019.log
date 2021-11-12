@@ -1,0 +1,3 @@
+﻿  Tutorial08.cpp
+Tutorial08.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+  Tutorial08_2019.vcxproj -> \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\DXUT_Tutorials\Direct3D11TutorialsDXUT\Debug\Tutorial08.exe

@@ -1,0 +1,5 @@
+C:\temp\DXUT\Optional\Bin\Desktop_2019_Win10\Win32\Debug\DXUTOpt.lib
+C:\temp\DXUT\Optional\Bin\Desktop_2019_Win10\Win32\Debug\DXUTOpt.pdb
+C:\temp\DXUT_Tutorials\DXUT\Optional\Bin\Desktop_2019_Win10\Win32\Debug\DXUTOpt.lib
+C:\temp\DXUT_Tutorials\DXUT\Optional\Bin\Desktop_2019_Win10\Win32\Debug\DXUTOpt.pdb
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\DXUT_Tutorials\DXUT\Optional\Bin\Desktop_2019_Win10\Win32\Debug\DXUTOpt.lib

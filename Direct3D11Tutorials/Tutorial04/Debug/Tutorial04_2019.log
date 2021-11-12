@@ -1,0 +1,11 @@
+﻿\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(63,9-37): warning X3206: implicit truncation of vector type
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(64,9-40): warning X3206: implicit truncation of vector type
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(96,9-67): warning X3206: implicit truncation of vector type
+  
+  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_PS.cso
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(63,9-37): warning X3206: implicit truncation of vector type
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(64,9-40): warning X3206: implicit truncation of vector type
+\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(96,9-67): warning X3206: implicit truncation of vector type
+  
+  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_VS.cso
+  Tutorial04_2019.vcxproj -> \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04.exe

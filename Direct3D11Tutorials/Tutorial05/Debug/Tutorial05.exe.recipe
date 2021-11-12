@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial05.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial05_PS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial05_VS.cso</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>
