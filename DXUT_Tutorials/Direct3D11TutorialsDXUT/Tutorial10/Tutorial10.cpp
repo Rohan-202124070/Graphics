@@ -37,6 +37,8 @@ struct CBChangesEveryFrame
     XMFLOAT4   vMisc;
     XMFLOAT4   vTime;
     XMFLOAT4   vFrequence;
+    XMFLOAT4   vScaling;
+    XMFLOAT4   vTranslation;
 }; 
 
 
@@ -69,7 +71,8 @@ bool                        g_bSpinning = true;
 bool                        g_bRotatrion_X = true;
 bool                        g_bRotatrion_Y = true;
 bool                        g_bRotatrion_Z = true;
-
+bool                        g_fScaling = true;
+bool                        g_fTranslation = true;
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -84,7 +87,8 @@ bool                        g_bRotatrion_Z = true;
 #define IDC_TOGGLEROTATE_Y      9
 #define IDC_TOGGLEROTATE_X      10
 #define IDC_PULSATING_FREQUENCE 11
-
+#define IDC_SCALING             12
+#define IDC_TRANSLATION         13
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -259,28 +263,25 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     if( g_bSpinning )
     {
         g_World = XMMatrixRotationY( 60.0f * XMConvertToRadians((float)fTime) );
+    } 
+    else if (g_bRotatrion_X)
+    {
+        g_World = XMMatrixRotationAxis(XMVectorSet(3.0f, 0.0f, 0.0f, 0.0f), (float)fTime);
+
+    }
+    else if (g_bRotatrion_Y)
+    {
+        g_World = XMMatrixRotationAxis(XMVectorSet(0.0f, 4.0f, 0.0f, 0.0f), (float)fTime);
+
+    }
+    else if (g_bRotatrion_Z)
+    {
+        g_World = XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, -6.0f, 0.0f), (float)fTime);
+       
     }
     else
     {
         g_World = XMMatrixRotationY( XMConvertToRadians( 180.f ) );
-    }
-
-    if (g_bRotatrion_X)
-    {
-        g_World = XMMatrixRotationAxis(XMVectorSet(3.0f, 0.0f, 0.0f, 0.0f), (float)fTime);
-   
-    }
-
-    if (g_bRotatrion_Y)
-    {
-        g_World = XMMatrixRotationAxis(XMVectorSet(0.0f, 4.0f, 0.0f, 0.0f), (float)fTime);
-        
-    }
-
-    if (g_bRotatrion_Z)
-    {
-        g_World = XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, -6.0f, 0.0f), (float)fTime);
-       
     }
 
     XMMATRIX mRot = XMMatrixRotationX( XMConvertToRadians( -90.0f ) );
@@ -346,6 +347,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
     pCB->vMisc.x = g_fModelPuffiness;
     pCB->vTime.x = g_time;
+    pCB->vScaling.x = (g_fScaling ? 1 : 0);
+    pCB->vTranslation.x = (g_fTranslation ? 1 : 0);
     pCB->vFrequence.x = g_fPulsatingFrequence;
     pd3dImmediateContext->Unmap( g_pCBChangesEveryFrame , 0 );
 
@@ -541,6 +544,19 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             break;
         }
 
+        case IDC_SCALING:
+        {
+            g_fScaling = g_SampleUI.GetCheckBox(IDC_SCALING)->GetChecked();
+            break;
+        }
+
+        case IDC_TRANSLATION:
+        {
+            g_fTranslation = g_SampleUI.GetCheckBox(IDC_TRANSLATION)->GetChecked();
+            break;
+        }
+
+
     }
 }
 
@@ -610,7 +626,8 @@ void InitApp()
     g_bRotatrion_X = false;
     g_bRotatrion_Y = false;
     g_bRotatrion_Z = false;
-    
+    g_fScaling = false;
+    g_fTranslation = false;
 
     g_SettingsDlg.Init( &g_DialogResourceManager );
     g_HUD.Init( &g_DialogResourceManager );
@@ -622,26 +639,30 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 22, VK_F3 );
     g_HUD.AddButton( IDC_TOGGLEWARP, L"Toggle WARP (F4)", 0, iY += 26, 170, 22, VK_F4 );
 
-    g_SampleUI.SetCallback( OnGUIEvent ); iY = 10;
+    g_SampleUI.SetCallback( OnGUIEvent ); iY = 1;
 
     WCHAR sz[100];
-    iY += 10;
+    iY += 1;
     swprintf_s( sz, 100, L"Puffiness: %0.2f", g_fModelPuffiness );
     g_SampleUI.AddStatic( IDC_PUFF_STATIC, sz, 0 , iY += 26, 170, 22 );
-    g_SampleUI.AddSlider( IDC_PUFF_SCALE, 50, iY += 26, 100, 22, 0, 2000, ( int )( g_fModelPuffiness * 100.0f ) );
+    g_SampleUI.AddSlider( IDC_PUFF_SCALE, 50, iY += 15, 100, 22, 0, 2000, ( int )( g_fModelPuffiness * 100.0f ) );
 
     WCHAR fer[100];
-    iY += 10;
+    iY += 2;
     swprintf_s(fer, 100, L"Pulsating: %0.2f", g_fPulsatingFrequence);
     g_SampleUI.AddStatic(IDC_PULSATING_FREQUENCE, fer, 0, iY += 26, 170, 22);
-    g_SampleUI.AddSlider(IDC_PULSATING_FREQUENCE, 50, iY += 26, 100, 22, 0, 2000, (int)(g_fPulsatingFrequence));
+    g_SampleUI.AddSlider(IDC_PULSATING_FREQUENCE, 50, iY += 15, 100, 22, 0, 2000, (int)(g_fPulsatingFrequence));
 
-    iY += 10;
+    iY += 2;
     g_SampleUI.AddCheckBox( IDC_TOGGLESPIN, L"Toggle Spinning", 0, iY += 26, 170, 22, g_bSpinning );
-    iY += 10;
+    iY += 2;
     g_SampleUI.AddCheckBox(IDC_TOGGLEROTATE_X, L"Toggle Rotattion X", 0, iY += 26, 170, 22, g_bRotatrion_X);
-    iY += 10;
+    iY += 2;
     g_SampleUI.AddCheckBox(IDC_TOGGLEROTATE_Y, L"Toggle Rotattion Y", 0, iY += 26, 170, 22, g_bRotatrion_Y);
-    iY += 10;
+    iY += 2;
     g_SampleUI.AddCheckBox(IDC_TOGGLEROTATE_Z, L"Toggle Rotattion Z", 0, iY += 26, 170, 22, g_bRotatrion_Z);
+    iY += 2;
+    g_SampleUI.AddCheckBox(IDC_SCALING, L"Toggle Scaling", 0, iY += 26, 170, 22, g_fScaling);
+    iY += 2;
+    g_SampleUI.AddCheckBox(IDC_TRANSLATION, L"Toggle Translation", 0, iY += 26, 170, 22, g_fTranslation);
 }

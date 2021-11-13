@@ -23,6 +23,9 @@ cbuffer cbChangesEveryFrame : register( b1 )
     float Puffiness;
 	float4 Time;
 	float4 Frequence;
+	float4 Scaling;
+	float4 Translation;
+    
 };
 
 struct VS_INPUT
@@ -86,18 +89,39 @@ struct PS_INPUT
 
 PS_INPUT VS(VS_INPUT input)
 {
-	float magnitude = 3.5f;
+	matrix scaling_matrix = { { 13, 0, 0, 0 }, { 0, 1590.1, 0, 0 }, { 0, 0, 80.0, 0 }, { 0, 0, 0.1, 1 } };
+	matrix scaling_matrix_res;
+	matrix translation_matrix = { { 1, 0, 0, 2 }, { 0, 1, 0, 2 }, { 0, 0, 1, -2 }, { 0, 0, 0, 1 } };
+	
+	if ((int) Scaling.x == 1)
+	{
+		scaling_matrix_res = WorldViewProj * scaling_matrix;
+	}
+	else if (Translation.x == 1)
+	{
+		scaling_matrix_res = WorldViewProj * translation_matrix;
+
+	}
+	else
+	{
+		scaling_matrix_res = WorldViewProj;
+
+	}
+	
+	float magnitude = 0.5f;
 
 	PS_INPUT output = (PS_INPUT) 0;
 	input.Pos += input.Norm * Puffiness;
 
-	output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+	output.Pos = mul(float4(input.Pos, 1), scaling_matrix_res);
 	float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
     
-	float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
-    
-	output.Pos += scale * float4(vNormalWorldSpace, 0);
-
+	if (Frequence.x > 0.0)
+	{
+		float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
+		output.Pos += scale * float4(vNormalWorldSpace, 0);
+	}
+	
 	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
 	output.Diffuse.rgb = fLighting;
 	output.Diffuse.a = 1.0f;
