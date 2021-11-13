@@ -91,7 +91,8 @@ PS_INPUT VS(VS_INPUT input)
 {
 	matrix scaling_matrix = { { 13, 0, 0, 0 }, { 0, 1590.1, 0, 0 }, { 0, 0, 80.0, 0 }, { 0, 0, 0.1, 1 } };
 	matrix scaling_matrix_res;
-	matrix translation_matrix = { { 1, 0, 0, 2 }, { 0, 1, 0, 2 }, { 0, 0, 1, -2 }, { 0, 0, 0, 1 } };
+    matrix translation_matrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { Frequence.x, 0, 0, 1 } };
+    vector translation_vector = { 0, 0.4, 0, 0 };
 	
 	if ((int) Scaling.x == 1)
 	{
@@ -99,7 +100,7 @@ PS_INPUT VS(VS_INPUT input)
 	}
 	else if (Translation.x == 1)
 	{
-		scaling_matrix_res = WorldViewProj * translation_matrix;
+        scaling_matrix_res = mul(WorldViewProj, translation_matrix);
 
 	}
 	else

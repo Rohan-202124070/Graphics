@@ -73,6 +73,9 @@ bool                        g_bRotatrion_Y = true;
 bool                        g_bRotatrion_Z = true;
 bool                        g_fScaling = true;
 bool                        g_fTranslation = true;
+bool                        g_fTranslation_X = false;
+bool                        g_fTranslation_Y = false;
+bool                        g_fTranslation_Z = false;
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -89,6 +92,9 @@ bool                        g_fTranslation = true;
 #define IDC_PULSATING_FREQUENCE 11
 #define IDC_SCALING             12
 #define IDC_TRANSLATION         13
+#define IDC_TRANSCATE_X         14
+#define IDC_TRANSCATE_Y         15
+#define IDC_TRANSCATE_Z         16
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -333,7 +339,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     //
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
-
+   // XMMATRIX mTranslate = XMMatrixTranslation(0.5f, 0.0f, 0.0f);
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mWorldViewProjection = g_World * mView * mProj;
@@ -345,6 +351,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     auto pCB = reinterpret_cast<CBChangesEveryFrame*>( MappedResource.pData );
     XMStoreFloat4x4( &pCB->mWorldViewProj, XMMatrixTranspose( mWorldViewProjection ) );
     XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
+    
     pCB->vMisc.x = g_fModelPuffiness;
     pCB->vTime.x = g_time;
     pCB->vScaling.x = (g_fScaling ? 1 : 0);
@@ -556,6 +563,24 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             break;
         }
 
+        case IDC_TRANSCATE_X:
+        {
+            g_fTranslation_X = true;
+            break;
+        }
+
+        case IDC_TRANSCATE_Y:
+        {
+            g_fTranslation_Y = true;
+            break;
+        }
+
+        case IDC_TRANSCATE_Z:
+        {
+            g_fTranslation_Z = true;
+            break;
+        }
+
 
     }
 }
@@ -633,11 +658,14 @@ void InitApp()
     g_HUD.Init( &g_DialogResourceManager );
     g_SampleUI.Init( &g_DialogResourceManager );
 
-    g_HUD.SetCallback( OnGUIEvent ); int iY = 10;
+    g_HUD.SetCallback( OnGUIEvent ); int iY = 1;
     g_HUD.AddButton( IDC_TOGGLEFULLSCREEN, L"Toggle full screen", 0, iY, 170, 22 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 22, VK_F2 );
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 22, VK_F3 );
     g_HUD.AddButton( IDC_TOGGLEWARP, L"Toggle WARP (F4)", 0, iY += 26, 170, 22, VK_F4 );
+    g_HUD.AddButton(IDC_TRANSCATE_X, L"Translate along X", 0, iY += 26, 170, 22, VK_F5);
+    g_HUD.AddButton(IDC_TRANSCATE_Y, L"Translate along Y", 0, iY += 26, 170, 22, VK_F6);
+    g_HUD.AddButton(IDC_TRANSCATE_Z, L"Translate along Z", 0, iY += 26, 170, 22, VK_F7);
 
     g_SampleUI.SetCallback( OnGUIEvent ); iY = 1;
 
