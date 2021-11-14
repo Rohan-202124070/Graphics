@@ -86,49 +86,80 @@ struct PS_INPUT
 //	return output;
 //}
 
+//for the exercise 2 and 3
+//PS_INPUT VS(VS_INPUT input)
+//{
+//	matrix scaling_matrix = { { 3.2, 0, 0, 0 }, { 0, 0.6, 0, 0 }, { 0, 0, 0.10, 0 }, { 0, 0, 0.1, 1 } };
+//    //matrix shering_matrix = { { 1, 0.4, 0.1, 0.4 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+//	matrix scaling_matrix_res;
+//    matrix translation_matrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -0.4, 0.3, -0.095, 1 } };
+//    vector translation_vector = { 0, 0.4, 0, 0 };
+	
+//	if ((int) Scaling.x == 1)
+//	{
+//        scaling_matrix_res = mul(WorldViewProj, scaling_matrix);
+//    }
+//	else if (Translation.x == 1)
+//	{
+//        scaling_matrix_res = mul(WorldViewProj, translation_matrix);
+
+//	}
+//	else
+//	{
+//		scaling_matrix_res = WorldViewProj;
+
+//	}
+	
+//	float magnitude = 0.5f;
+
+//	PS_INPUT output = (PS_INPUT) 0;
+//	input.Pos += input.Norm * Puffiness;
+
+//	output.Pos = mul(float4(input.Pos, 1), scaling_matrix_res);
+//	float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
+    
+//	if (Frequence.x > 0.0)
+//	{
+//		float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
+//		output.Pos += scale * float4(vNormalWorldSpace, 0);
+//	}
+	
+//	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+//	output.Diffuse.rgb = fLighting;
+//	output.Diffuse.a = 1.0f;
+
+//	output.Tex = input.Tex;
+//	return output;
+//}
 
 PS_INPUT VS(VS_INPUT input)
 {
-	matrix scaling_matrix = { { 13, 0, 0, 0 }, { 0, 1590.1, 0, 0 }, { 0, 0, 80.0, 0 }, { 0, 0, 0.1, 1 } };
-	matrix scaling_matrix_res;
-    matrix translation_matrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { Frequence.x, 0, 0, 1 } };
-    vector translation_vector = { 0, 0.4, 0, 0 };
-	
-	if ((int) Scaling.x == 1)
-	{
-		scaling_matrix_res = WorldViewProj * scaling_matrix;
-	}
-	else if (Translation.x == 1)
-	{
-        scaling_matrix_res = mul(WorldViewProj, translation_matrix);
-
-	}
-	else
-	{
-		scaling_matrix_res = WorldViewProj;
-
-	}
-	
-	float magnitude = 0.5f;
-
-	PS_INPUT output = (PS_INPUT) 0;
-	input.Pos += input.Norm * Puffiness;
-
-	output.Pos = mul(float4(input.Pos, 1), scaling_matrix_res);
-	float3 vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World));
     
-	if (Frequence.x > 0.0)
-	{
-		float scale = magnitude * smoothstep(140, 160, output.Pos.z) * (sin(Time.x * Frequence) + 0.5);
-		output.Pos += scale * float4(vNormalWorldSpace, 0);
-	}
-	
-	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
-	output.Diffuse.rgb = fLighting;
-	output.Diffuse.a = 1.0f;
+    matrix rotation_matrix_res;
+    float3 vNormalWorldSpace;
+    PS_INPUT output = (PS_INPUT) 0;
+    input.Pos += input.Norm * Puffiness;
+    output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+    float scale = 0.5 * smoothstep(400, 780, output.Pos.y);
+    matrix rotation_matrix = { { cos(scale), 0, sin(scale), 0 }, { 0, 1, 0, 0 }, { -sin(scale), 0, cos(scale), 0 }, { 0, 0, 0, 1 } };
+    //rotation_matrix_res = WorldViewProj * rotation_matrix;
+    if ((int) Scaling.x == 1)
+    {
+        rotation_matrix_res = mul(World, rotation_matrix);
+        vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) rotation_matrix) * scale));
+    }
+    else
+    {
+        rotation_matrix_res = World;
+        vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
+    }
+    output.Pos += scale * float4(vNormalWorldSpace, 0);
+    float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+    output.Diffuse.rgb = fLighting;
+    output.Diffuse.a = 1.0f;
 
-	output.Tex = input.Tex;
-	return output;
+    output.Tex = input.Tex;
+    return output;
 }
 
 
