@@ -39,6 +39,8 @@ struct CBChangesEveryFrame
     XMFLOAT4   vFrequence;
     XMFLOAT4   vScaling;
     XMFLOAT4   vTranslation;
+    XMFLOAT4   vHeadRotate;
+    XMFLOAT4X4 mHeadRotation;
 }; 
 
 
@@ -73,6 +75,7 @@ bool                        g_bRotatrion_Y = true;
 bool                        g_bRotatrion_Z = true;
 bool                        g_fScaling = true;
 bool                        g_fTranslation = true;
+bool                        g_rotate_head = true;
 //--------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
@@ -92,7 +95,7 @@ bool                        g_fTranslation = true;
 #define IDC_TRANSCATE_X         14
 #define IDC_TRANSCATE_Y         15
 #define IDC_TRANSCATE_Z         16
-
+#define IDC_ROTATE_HEAD         17
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
@@ -263,7 +266,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     // Update the camera's position based on user input 
     g_Camera.FrameMove( fElapsedTime );
 
-    if( g_bSpinning )
+    if( g_bSpinning)
     {
         g_World = XMMatrixRotationY( 60.0f * XMConvertToRadians((float)fTime) );
     } 
@@ -280,7 +283,10 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     else if (g_bRotatrion_Z)
     {
         g_World = XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, -6.0f, 0.0f), (float)fTime);
-       
+
+    } else if (g_rotate_head)
+    {
+        g_World = XMMatrixRotationY(XMConvertToRadians(180.f));
     }
     else
     {
@@ -340,7 +346,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mWorldViewProjection = g_World * mView * mProj;
-
+    
     // Update constant buffer that changes once per frame
     HRESULT hr;
     D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -348,12 +354,13 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     auto pCB = reinterpret_cast<CBChangesEveryFrame*>( MappedResource.pData );
     XMStoreFloat4x4( &pCB->mWorldViewProj, XMMatrixTranspose( mWorldViewProjection ) );
     XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
-    
+   
     pCB->vMisc.x = g_fModelPuffiness;
     pCB->vTime.x = g_time;
     pCB->vScaling.x = (g_fScaling ? 1 : 0);
     pCB->vTranslation.x = (g_fTranslation ? 1 : 0);
     pCB->vFrequence.x = g_fPulsatingFrequence;
+    pCB->vHeadRotate.x = (g_rotate_head ? 1: 0 );
     pd3dImmediateContext->Unmap( g_pCBChangesEveryFrame , 0 );
 
     //
@@ -559,6 +566,12 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             g_fTranslation = g_SampleUI.GetCheckBox(IDC_TRANSLATION)->GetChecked();
             break;
         }
+
+        case IDC_ROTATE_HEAD:
+        {
+            g_rotate_head = g_SampleUI.GetCheckBox(IDC_ROTATE_HEAD)->GetChecked();
+            break;
+        }
     }
 }
 
@@ -630,6 +643,7 @@ void InitApp()
     g_bRotatrion_Z = false;
     g_fScaling = false;
     g_fTranslation = false;
+    g_rotate_head = false;
 
     g_SettingsDlg.Init( &g_DialogResourceManager );
     g_HUD.Init( &g_DialogResourceManager );
@@ -667,4 +681,6 @@ void InitApp()
     g_SampleUI.AddCheckBox(IDC_SCALING, L"Toggle Scaling", 0, iY += 26, 170, 22, g_fScaling);
     iY += 2;
     g_SampleUI.AddCheckBox(IDC_TRANSLATION, L"Toggle Translation", 0, iY += 26, 170, 22, g_fTranslation);
+    iY += 2;
+    g_SampleUI.AddCheckBox(IDC_ROTATE_HEAD, L"Toggle Rotatet head", 0, iY += 26, 170, 22, g_rotate_head);
 }

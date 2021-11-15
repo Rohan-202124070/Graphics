@@ -25,6 +25,7 @@ cbuffer cbChangesEveryFrame : register( b1 )
 	float4 Frequence;
 	float4 Scaling;
 	float4 Translation;
+    float4 HeadRotate;
     
 };
 
@@ -140,17 +141,15 @@ PS_INPUT VS(VS_INPUT input)
     PS_INPUT output = (PS_INPUT) 0;
     input.Pos += input.Norm * Puffiness;
     output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
-    float scale = 0.5 * smoothstep(400, 780, output.Pos.y);
+    float scale = 0.5 * sin(smoothstep(400, 780, output.Pos.y));
     matrix rotation_matrix = { { cos(scale), 0, sin(scale), 0 }, { 0, 1, 0, 0 }, { -sin(scale), 0, cos(scale), 0 }, { 0, 0, 0, 1 } };
     //rotation_matrix_res = WorldViewProj * rotation_matrix;
-    if ((int) Scaling.x == 1)
+    if ((int) HeadRotate.x == 1)
     {
-        rotation_matrix_res = mul(World, rotation_matrix);
-        vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) rotation_matrix) * scale));
+        vNormalWorldSpace = normalize(mul(input.Norm, scale * (float3x3) World));
     }
     else
     {
-        rotation_matrix_res = World;
         vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
     }
     output.Pos += scale * float4(vNormalWorldSpace, 0);
@@ -161,6 +160,8 @@ PS_INPUT VS(VS_INPUT input)
     output.Tex = input.Tex;
     return output;
 }
+
+
 
 
 //--------------------------------------------------------------------------------------
