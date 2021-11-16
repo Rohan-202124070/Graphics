@@ -141,25 +141,36 @@ PS_INPUT VS(VS_INPUT input)
     PS_INPUT output = (PS_INPUT) 0;
     input.Pos += input.Norm * Puffiness;
     output.Pos = mul(float4(input.Pos, 1), WorldViewProj);
-    float scale = 0.5 * sin(smoothstep(400, 780, output.Pos.y));
-    matrix rotation_matrix = { { cos(scale), 0, sin(scale), 0 }, { 0, 1, 0, 0 }, { -sin(scale), 0, cos(scale), 0 }, { 0, 0, 0, 1 } };
-    //rotation_matrix_res = WorldViewProj * rotation_matrix;
-    if ((int) HeadRotate.x == 1)
-    {
-        vNormalWorldSpace = normalize(mul(input.Norm, scale * (float3x3) World));
-    }
-    else
-    {
-        vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
-    }
-    output.Pos += scale * float4(vNormalWorldSpace, 0);
-    float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
-    output.Diffuse.rgb = fLighting;
-    output.Diffuse.a = 1.0f;
+	
+	//float fzRadAngle = radians(180);
+	//float radians_x = radians(-90f);
+	//matrix static_rotation_matrix = { { cos(fzRadAngle), 0, sin(fzRadAngle), 0 }, { 0, 1, 0, 0 }, { -sin(fzRadAngle), 0, cos(fzRadAngle), 0 }, { 0, 0, 0, 1 } };
+	matrix rotation_matrix = { { cos(Time.x), 0, sin(Time.x), 0 }, { 0, 1, 0, 0 }, { -sin(Time.x), 0, cos(Time.x), 0 }, { 0, 0, 0, 1 } };
+	if (input.Pos.y > 70.1 )
+	{
+		float scale_Head = 2.5 * smoothstep(400, 780, output.Pos.y) * sin(Time.x);
+		vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World * scale_Head));
+		output.Pos += scale_Head * float4(vNormalWorldSpace, 0);
+	}
+	//else
+	//{
+	//	vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
+	//	output.Pos += float4(vNormalWorldSpace, 0);
+	//}
+		//if ((int) HeadRotate.x == 1)
+		//{
+		////vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) M_HEAD_ROTATE));
+		//	vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World * scale_Body));
+		//}
+		
+		
+		float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+		output.Diffuse.rgb = fLighting;
+		output.Diffuse.a = 1.0f;
 
-    output.Tex = input.Tex;
-    return output;
-}
+		output.Tex = input.Tex;
+		return output;
+	}
 
 
 
