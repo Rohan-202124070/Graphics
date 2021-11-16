@@ -288,7 +288,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 
     } else if (g_rotate_head)
     {
-        g_World = XMMatrixRotationY(XMConvertToRadians(180.f));
+        g_World = XMMatrixRotationY(sin(80 * XMConvertToRadians(-(float)fTime)));
     }
     else
     {
