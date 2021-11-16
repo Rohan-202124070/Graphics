@@ -30,8 +30,6 @@ struct SimpleVertex
     XMFLOAT3 Pos;
     XMFLOAT3 Normal;
     XMFLOAT2 TexCoord;
-    XMFLOAT3 Tangent;
-    XMFLOAT3 Binormal;
 };
 
 
@@ -41,7 +39,7 @@ struct ConstantBuffer
     XMMATRIX mView;
     XMMATRIX mProjection;
     XMFLOAT4 vColor;
-    XMFLOAT4 vLightPos;
+    XMFLOAT4   vTime;
 };
 
 
@@ -74,6 +72,9 @@ XMMATRIX                g_WorldSecond;
 XMMATRIX                g_ViewSecond;
 XMMATRIX                g_WorldThird;
 XMMATRIX                g_ViewThird;
+XMMATRIX                g_WorldFourth;
+XMMATRIX                g_WorldFive;
+XMMATRIX                g_WorldSix;
 
 
 ID3D11ShaderResourceView* wood_TextureRV = nullptr;
@@ -385,17 +386,17 @@ HRESULT InitDevice()
         return -1;
     }
 
-   /* D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-    shaderResourceViewDesc.Format = depthStencilBufferDesc.Format;
-    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+    /* D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+     shaderResourceViewDesc.Format = depthStencilBufferDesc.Format;
+     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+     shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-    hr = g_pd3dDevice->CreateShaderResourceView(NULL, &shaderResourceViewDesc, &wood_TextureRV);
-    if (FAILED(hr))
-    {
-        return -1;
-    }*/
+     hr = g_pd3dDevice->CreateShaderResourceView(NULL, &shaderResourceViewDesc, &wood_TextureRV);
+     if (FAILED(hr))
+     {
+         return -1;
+     }*/
 
     hr = g_pd3dDevice->CreateDepthStencilView(g_DepthStencil, nullptr, &g_DepthStencilView);
     if (FAILED(hr))
@@ -439,8 +440,6 @@ HRESULT InitDevice()
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE(layout);
 
@@ -474,40 +473,40 @@ HRESULT InitDevice()
     SimpleVertex vertices[] =
     {
         //top
-       /* { XMFLOAT3(-1.0f, 1.0f, -1.0f) , XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)   },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },*/
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f) , XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
-        ////bottom
-        //{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-        //{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-        //{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        //{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        //bottom
+        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 
-        ////left side 
-        //{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-        //{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        //{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-        //{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        //left side 
+        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
 
-        ////right side 
-        //{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        //{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-        //{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-        //{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        //right side 
+        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 
         //front
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f),  XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f)  },
+        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f),  XMFLOAT2(0.0f, 0.0f) },
 
-        ////back
-        // { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-        //{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-        //{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-        //{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+        //back
+         { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
     };
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -531,6 +530,21 @@ HRESULT InitDevice()
     {
         3,1,0,
         2,1,3,
+
+        6,4,5,
+        7,4,6,
+
+        11,9,8,
+        10,9,11,
+
+        14,12,13,
+        15,12,14,
+
+        19,17,16,
+        18,17,19,
+
+        22,20,21,
+        23,20,22
     };
 
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -557,32 +571,16 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    // Load the coin Texture
-    //hr = CreateDDSTextureFromFile(g_pd3dDevice, L"Coin.dds", nullptr, &wood_TextureRV);
-    //if (FAILED(hr))
-    //    return hr;
-
-    //// Load the tile Texture
-    //hr = CreateDDSTextureFromFile(g_pd3dDevice, L"Tiles.dds", nullptr, &tile_TextureRV);
-    //if (FAILED(hr))
-    //    return hr;
-
-
-    // Load the coin Texture
-    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"stones.dds", nullptr, &wood_TextureRV);
+    //Load the tile Texture
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rocks.dds", nullptr, &tile_TextureRV);
     if (FAILED(hr))
         return hr;
 
-    // //Load the tile Texture
-    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rockNormal.dds", nullptr, &tile_TextureRV);
-    if (FAILED(hr))
-        return hr;
 
-   
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc = {};
     ZeroMemory(&sampDesc, sizeof(sampDesc));
-    sampDesc.Filter = D3D11_FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR;
+    sampDesc.Filter = D3D11_FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -594,30 +592,20 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    //// Create the sample state
-    //D3D11_SAMPLER_DESC sampDescForTile = {};
-    //ZeroMemory(&sampDesc, sizeof(sampDesc));
-    //sampDescForTile.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    //sampDescForTile.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    //sampDescForTile.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    //sampDescForTile.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    //sampDescForTile.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    //hr = g_pd3dDevice->CreateSamplerState(&sampDescForTile, &tile_Sampler);
-
-    //if (FAILED(hr))
-    //    return hr;
-
     // Initialize the world matrix
     g_World = XMMatrixIdentity();
     g_WorldSecond = XMMatrixIdentity();
     g_WorldThird = XMMatrixIdentity();
+    g_WorldFourth = XMMatrixIdentity();
+    g_WorldFive = XMMatrixIdentity();
+    g_WorldSix = XMMatrixIdentity();
 
     // Initialize the view matrix
    // XMVECTOR Eye = XMVectorSet(-0.5f, 0.0f, -5.0f, 0.0f); //for exercise 04
    // XMVECTOR Eye = XMVectorSet(0.5f, 2.5f, -4.5f, 0.0f);
-    XMVECTOR Eye = XMVectorSet(-3.0f, 2.0f, -5.0f, 0.0f);
+    XMVECTOR Eye = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
     XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR Up = XMVectorSet(0.0f, 3.0f, 0.0f, 0.0f);
     g_View = XMMatrixLookAtLH(Eye, At, Up);
 
     // Initialize the projection matrix
@@ -708,18 +696,7 @@ void Render()
     //
 
     //fof lab 5 - Exercise 04 
-    g_World = XMMatrixRotationY(0.5);
-
-    //for exercise 04
-    /*XMMATRIX mScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
-    g_World *= mScale;*/
-
-    XMMATRIX mTranslate = XMMatrixTranslation(-1.0f, 1.5f, -2.0f);
-    g_World *= mTranslate;
-
-
-    g_WorldSecond = XMMatrixRotationY(t);
-    g_WorldThird = XMMatrixRotationY(t);
+    g_World = XMMatrixRotationY(t);
 
     //
     // Clear the back buffer
@@ -730,59 +707,104 @@ void Render()
 
     // First cube
     ConstantBuffer cb;
+    XMMATRIX mScale = XMMatrixScaling(0.1f, 1.0f, 0.1f);
+    XMMATRIX mTranslate = XMMatrixTranslation(0.2f, 0.4f, 0.3f);
+    g_World *= mScale * mTranslate;
     cb.mWorld = XMMatrixTranspose(g_World);
     cb.mView = XMMatrixTranspose(g_View);
     cb.mProjection = XMMatrixTranspose(g_Projection);
     cb.vColor = g_vColor;
-    cb.vLightPos = XMFLOAT4(1.0f, -5.0f, -100.0f, 0.0f);
+    cb.vTime.x = t;
     g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    
-    //for rock
-    g_pImmediateContext->PSSetShaderResources(0, 1, &wood_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &wood_Sampler);
-
-    //for stone
-    g_pImmediateContext->PSSetShaderResources(1, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(1, 1, &tile_Sampler);
-
+    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
-    // Second cube
-    /*ConstantBuffer cbSecond;
-    cbSecond.mWorld = XMMatrixTranspose(g_WorldSecond);
-    cbSecond.mView = XMMatrixTranspose(g_ViewSecond);
-    cbSecond.mProjection = XMMatrixTranspose(g_Projection);
-    cbSecond.lightPosFirst = XMVectorSet(1.5f, 0.8f, 2.0f, 0.0f);
-    cbSecond.lightPosSecond = XMVectorSet(0.0f, 3.8f, 0.0f, 0.0f);
+
+    XMMATRIX mScale_2 = XMMatrixScaling(0.1f, 1.0f, 0.1f);
+    XMMATRIX mTranslate_2 = XMMatrixTranslation(-0.2f, 0.4f, 0.3f);
+    g_WorldSecond = XMMatrixRotationY(t);
+    g_WorldSecond *= mScale_2 * mTranslate_2;
+    cb.mWorld = XMMatrixTranspose(g_WorldSecond);
+    cb.mView = XMMatrixTranspose(g_View);
+    cb.mProjection = XMMatrixTranspose(g_Projection);
+    cb.vColor = g_vColor;
+    cb.vTime.x = t;
     g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cbSecond, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    XMMATRIX mScale_3 = XMMatrixScaling(0.2f, 0.5f, 0.3f);
+    XMMATRIX mTranslate_3 = XMMatrixTranslation(-0.05f, 1.9f, 0.1f);
+    g_WorldThird = XMMatrixRotationY(0.5);
+    g_WorldThird *= mScale_3 * mTranslate_3;
+    cb.mWorld = XMMatrixTranspose(g_WorldThird);
+    cb.mView = XMMatrixTranspose(g_View);
+    cb.mProjection = XMMatrixTranspose(g_Projection);
+    cb.vColor = g_vColor;
+    cb.vTime.x = t;
+    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+    
+
+    /*XMMATRIX mScale_4 = XMMatrixScaling(1.1f, 0.1f, 0.2f);
+    XMMATRIX mTranslate_4 = XMMatrixTranslation(-0.05f, 2.5f, 0.3f);
+    g_WorldFourth = XMMatrixRotationY(0.5);
+    g_WorldFourth *= mScale_4 * mTranslate_4;
+    cb.mWorld = XMMatrixTranspose(g_WorldFourth);
+    cb.mView = XMMatrixTranspose(g_View);
+    cb.mProjection = XMMatrixTranspose(g_Projection);
+    cb.vColor = g_vColor;
+    cb.vTime.x = t;
+    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
     g_pImmediateContext->DrawIndexed(36, 0, 0);*/
 
-    // Third cube
-    /*ConstantBuffer cbThird;
-    cbThird.mWorld = XMMatrixTranspose(g_WorldThird);
-    cbThird.mView = XMMatrixTranspose(g_ViewThird);
-    cbThird.mProjection = XMMatrixTranspose(g_Projection);
-    cbThird.lightPosFirst = XMVectorSet(1.5f, 0.8f, 2.0f, 0.0f);
-    cbThird.lightPosSecond = XMVectorSet(0.0f, 3.8f, 0.0f, 0.0f);
+    XMMATRIX mScale_5 = XMMatrixScaling(0.1f, 0.2f, 0.2f);
+    XMMATRIX mTranslate_5 = XMMatrixTranslation(-0.05f, 2.8f, 0.1f);
+    g_WorldFive = XMMatrixRotationY(0.5);
+    g_WorldFive *= mScale_5 * mTranslate_5;
+    cb.mWorld = XMMatrixTranspose(g_WorldFive);
+    cb.mView = XMMatrixTranspose(g_View);
+    cb.mProjection = XMMatrixTranspose(g_Projection);
+    cb.vColor = g_vColor;
+    cb.vTime.x = t;
     g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cbThird, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);*/
+    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     //
     // Present our back buffer to our front buffer
     //
     g_pSwapChain->Present(0, 0);
 }
-
