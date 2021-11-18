@@ -34,13 +34,16 @@ struct CBChangesEveryFrame
 {
     XMFLOAT4X4 mWorldViewProj;
     XMFLOAT4X4 mWorld;
+    XMFLOAT4X4 mHeadmHeadWorldViewProjection;
+    XMFLOAT4X4 mHeadWord;
+    XMFLOAT4X4 mRightLeg;
+    XMFLOAT4X4 mLeftLeg;
     XMFLOAT4   vMisc;
     XMFLOAT4   vTime;
     XMFLOAT4   vFrequence;
     XMFLOAT4   vScaling;
     XMFLOAT4   vTranslation;
     XMFLOAT4   vHeadRotate;
-    XMFLOAT4X4 mHeadRotation;
 }; 
 
 
@@ -63,7 +66,7 @@ ID3D11Buffer*               g_pCBNeverChanges = nullptr;
 ID3D11Buffer*               g_pCBChangesEveryFrame = nullptr;
 ID3D11SamplerState*         g_pSamplerLinear = nullptr;
 XMMATRIX                    g_World;
-//XMMATRIX                    g_Head_World;
+XMMATRIX                    g_Head_World;
 
 static const XMVECTORF32 s_LightDir = { -0.577f, 0.577f, -0.577f, 0.f };
 
@@ -223,7 +226,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     // Initialize the world matrices
     g_World = XMMatrixIdentity();
-   // g_Head_World = XMMatrixIdentity();
+    g_Head_World = XMMatrixIdentity();
 
     // Setup the camera's view parameters
     static const XMVECTORF32 s_Eye = { 0.0f, 3.0f, -800.0f, 0.f };
@@ -288,7 +291,12 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 
     } else if (g_rotate_head)
     {
-        g_World = XMMatrixRotationY(sin(80 * XMConvertToRadians(-(float)fTime)));
+        //for rotation of head
+       // g_Head_World = XMMatrixRotationY(60.0f * XMConvertToRadians((float)fTime));
+
+        //for walking
+        g_Head_World = XMMatrixRotationY(XMConvertToRadians(-180.f));
+        g_World = XMMatrixRotationY(XMConvertToRadians(-180.f));
     }
     else
     {
@@ -297,7 +305,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 
     XMMATRIX mRot = XMMatrixRotationX( XMConvertToRadians( -90.0f ) );
     g_World = mRot * g_World;
-   // g_Head_World = mRot * g_Head_World;
+    g_Head_World = mRot * g_Head_World;
 }
 
 
@@ -349,16 +357,21 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
     XMMATRIX mWorldViewProjection = g_World * mView * mProj;
-   // XMMATRIX mHeadRotationMat = g_Head_World * mView * mProj;
-    
+    XMMATRIX mHeadWorldViewProjection = g_Head_World * mView * mProj;
+    XMMATRIX mTranslateRightLeg = XMMatrixTranslation(-140.0f, 2000.8f, -100.0f);
+    XMMATRIX mTranslateleftLeg = XMMatrixTranslation(-140.0f, -2000.8f, -100.0f);
+
     // Update constant buffer that changes once per frame
     HRESULT hr;
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     V( pd3dImmediateContext->Map( g_pCBChangesEveryFrame , 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource ) );
     auto pCB = reinterpret_cast<CBChangesEveryFrame*>( MappedResource.pData );
     XMStoreFloat4x4( &pCB->mWorldViewProj, XMMatrixTranspose( mWorldViewProjection ) );
-    //XMStoreFloat4x4(&pCB->mHeadRotation, XMMatrixTranspose(mHeadRotationMat));
+    XMStoreFloat4x4( &pCB->mHeadmHeadWorldViewProjection, XMMatrixTranspose(mHeadWorldViewProjection));
+    XMStoreFloat4x4(&pCB->mHeadWord, XMMatrixTranspose(g_Head_World));
     XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
+    XMStoreFloat4x4(&pCB->mRightLeg, XMMatrixTranspose(mTranslateRightLeg));
+    XMStoreFloat4x4(&pCB->mLeftLeg, XMMatrixTranspose(mTranslateleftLeg));
    
     pCB->vMisc.x = g_fModelPuffiness;
     pCB->vTime.x = g_time;

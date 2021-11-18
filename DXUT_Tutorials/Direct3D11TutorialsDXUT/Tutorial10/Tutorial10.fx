@@ -8,39 +8,43 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-Texture2D txDiffuse : register( t0 );
-SamplerState samLinear : register( s0 );
+Texture2D txDiffuse : register(t0);
+SamplerState samLinear : register(s0);
 
-cbuffer cbNeverChanges : register( b0 )
+cbuffer cbNeverChanges : register(b0)
 {
-    float3 vLightDir;
+	float3 vLightDir;
 };
 
-cbuffer cbChangesEveryFrame : register( b1 )
+cbuffer cbChangesEveryFrame : register(b1)
 {
-    matrix WorldViewProj;
-    matrix World;
-    float Puffiness;
+	matrix WorldViewProj;
+	matrix World;
+	matrix HeadmHeadWorldViewProjection;
+	matrix HeadWorld;
+	matrix RightLeg;
+	matrix LeftLeg;
+	float Puffiness;
 	float4 Time;
 	float4 Frequence;
 	float4 Scaling;
 	float4 Translation;
-    float4 HeadRotate;
+	float4 HeadRotate;
     
 };
 
 struct VS_INPUT
 {
-    float3 Pos          : POSITION;         //position
-    float3 Norm         : NORMAL;           //normal
-    float2 Tex          : TEXCOORD0;        //texture coordinate
+	float3 Pos : POSITION; //position
+	float3 Norm : NORMAL; //normal
+	float2 Tex : TEXCOORD0; //texture coordinate
 };
 
 struct PS_INPUT
 {
-    float4 Pos : SV_POSITION;
-    float4 Diffuse : COLOR0;
-    float2 Tex : TEXCOORD1;
+	float4 Pos : SV_POSITION;
+	float4 Diffuse : COLOR0;
+	float2 Tex : TEXCOORD1;
 };
 
 
@@ -136,42 +140,77 @@ struct PS_INPUT
 PS_INPUT VS(VS_INPUT input)
 {
     
-    matrix rotation_matrix_res;
-    float3 vNormalWorldSpace;
-    PS_INPUT outVS = (PS_INPUT) 0;
-    input.Pos += input.Norm * Puffiness;
+	matrix rotation_matrix_res;
+	float3 vNormalWorldSpace;
+	PS_INPUT outVS = (PS_INPUT) 0;
+	input.Pos += input.Norm * Puffiness;
    
+	// head rotation
+	//if (HeadRotate.x == 1)
+	//{
+	//	if (input.Pos.y > -35 && input.Pos.z > 175 )
+	//	{
+	//		float scale_Head = 2.5 * smoothstep(400, 780, outVS.Pos.y);
+	//		outVS.Pos = mul(float4(input.Pos, 1), HeadmHeadWorldViewProjection);
+	//		vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) HeadWorld));
+	//		outVS.Pos += scale_Head * float4(vNormalWorldSpace, 0);
+	//	}
+	//	else
+	//	{
+	//		outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+	//		vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
+	//		outVS.Pos += float4(vNormalWorldSpace, 0);
+	//	}
+       
+	//}
+	//else
+	//{
+	//	outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+	//	vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
+	//	outVS.Pos += float4(vNormalWorldSpace, 0);
+	//}
 	
-	//float fzRadAngle = radians(180);
-	//float radians_x = radians(-90f);
-	//matrix static_rotation_matrix = { { cos(fzRadAngle), 0, sin(fzRadAngle), 0 }, { 0, 1, 0, 0 }, { -sin(fzRadAngle), 0, cos(fzRadAngle), 0 }, { 0, 0, 0, 1 } };
-	matrix rotation_matrix = { { cos(Time.x), 0, sin(Time.x), 0 }, { 0, 1, 0, 0 }, { -sin(Time.x), 0, cos(Time.x), 0 }, { 0, 0, 0, 1 } };
-    if (HeadRotate.x == 1)
+	if (HeadRotate.x == 1)
 	{
-        outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
-        float scale_Head = 2.5 * smoothstep(400, 780, outVS.Pos.y);
-        vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World * scale_Head));
-        outVS.Pos += float4(vNormalWorldSpace, 0);
-    }
+		matrix scaling_matrix = { { 33.2, 0, 0, 0 }, { 0, 111.6, 0, 0 }, { 0, 0, 10.10, 0 }, { 0, 0, 0.1, 1 } };
+		matrix translation_matrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -5.4, 0.3, -5.095, 1 } };
+		matrix _res = scaling_matrix * translation_matrix;
+		
+		if (input.Pos.z < -90 && input.Pos.x < 10)
+		{
+			//float scale_Head = 2.5 * smoothstep(400, 780, outVS.Pos.y);
+			outVS.Pos = mul(float4(input.Pos, 1), HeadmHeadWorldViewProjection);
+			vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) HeadWorld * (float3x3) _res) * sin(Time.x));
+			outVS.Pos += float4(vNormalWorldSpace, 0);
+		}
+		else if (input.Pos.z < -90 && input.Pos.x > -10)
+		{
+			//float scale_Head = 2.5 * smoothstep(400, 780, outVS.Pos.y);
+			outVS.Pos = mul(float4(input.Pos, 1), HeadmHeadWorldViewProjection);
+			vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) HeadWorld * (float3x3) translation_matrix) * cos(Time.x));
+			outVS.Pos +=  float4(vNormalWorldSpace, 0);
+		}
+		else
+		{
+			outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+			vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
+			outVS.Pos += float4(vNormalWorldSpace, 0);
+		}
+       
+		}
 	else
 	{
-        outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
+		outVS.Pos = mul(float4(input.Pos, 1), WorldViewProj);
 		vNormalWorldSpace = normalize(mul(input.Norm, ((float3x3) World)));
-        outVS.Pos += float4(vNormalWorldSpace, 0);
-    }
-		//if ((int) HeadRotate.x == 1)
-		//{
-		////vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) M_HEAD_ROTATE));
-		//	vNormalWorldSpace = normalize(mul(input.Norm, (float3x3) World * scale_Body));
-		//}
+		outVS.Pos += float4(vNormalWorldSpace, 0);
+	}
 		
-		
-    float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
-    outVS.Diffuse.rgb = fLighting;
-    outVS.Diffuse.a = 1.0f;
+	float fLighting = saturate(dot(vNormalWorldSpace, vLightDir));
+	outVS.Diffuse.rgb = fLighting;
+	outVS.Diffuse.a = 1.0f;
 
-    outVS.Tex = input.Tex;
-    return outVS;
+	outVS.Tex = input.Tex;
+	return outVS;
 }
 
 
@@ -180,10 +219,10 @@ PS_INPUT VS(VS_INPUT input)
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS( PS_INPUT input) : SV_Target
+float4 PS(PS_INPUT input) : SV_Target
 {
     //calculate lighting assuming light color is <1,1,1,1>
-    float4 outputColor = txDiffuse.Sample( samLinear, input.Tex ) * input.Diffuse;
-    outputColor.a = 1;
-    return outputColor;
+	float4 outputColor = txDiffuse.Sample(samLinear, input.Tex) * input.Diffuse;
+	outputColor.a = 1;
+	return outputColor;
 }
