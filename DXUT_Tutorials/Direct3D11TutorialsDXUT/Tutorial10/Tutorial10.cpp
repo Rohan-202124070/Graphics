@@ -292,9 +292,10 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     } else if (g_rotate_head)
     {
         //for rotation of head
-       // g_Head_World = XMMatrixRotationY(60.0f * XMConvertToRadians((float)fTime));
+        /*g_Head_World = XMMatrixRotationY(60.0f * XMConvertToRadians((float)fTime));
+        g_World = XMMatrixRotationY(XMConvertToRadians(-180.f));*/
 
-        //for walking
+        //for walking and mouth open/close
         g_Head_World = XMMatrixRotationY(XMConvertToRadians(-180.f));
         g_World = XMMatrixRotationY(XMConvertToRadians(-180.f));
     }
@@ -353,13 +354,23 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     //
     auto pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
-   // XMMATRIX mTranslate = XMMatrixTranslation(0.5f, 0.0f, 0.0f);
+    //XMMATRIX mTranslate = XMMatrixTranslation(0.0f, 0.1f, 0.0f);
     XMMATRIX mView = g_Camera.GetViewMatrix();
     XMMATRIX mProj = g_Camera.GetProjMatrix();
+    XMMATRIX mTranslateRightLeg = XMMatrixTranslation(0.0f, 0.1f, 0.0f);
+    XMMATRIX mTranslateleftLeg = XMMatrixTranslation(0.0f, 0.1f, 0.0f);
+    XMMATRIX mTranslateMouth = XMMatrixTranslation(0.0f,-0.03f, 0.0f);
     XMMATRIX mWorldViewProjection = g_World * mView * mProj;
-    XMMATRIX mHeadWorldViewProjection = g_Head_World * mView * mProj;
-    XMMATRIX mTranslateRightLeg = XMMatrixTranslation(-140.0f, 2000.8f, -100.0f);
-    XMMATRIX mTranslateleftLeg = XMMatrixTranslation(-140.0f, -2000.8f, -100.0f);
+    XMMATRIX mHeadWorldViewProjection; 
+
+    //for head rotation
+    //mHeadWorldViewProjection = g_Head_World * mView * mProj;
+
+    //for walking
+    //mHeadWorldViewProjection = g_Head_World * mView * mProj * mTranslateRightLeg;
+
+    //for mouth open/close
+    mHeadWorldViewProjection = g_Head_World * mView * mProj * mTranslateMouth;
 
     // Update constant buffer that changes once per frame
     HRESULT hr;
@@ -368,10 +379,10 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     auto pCB = reinterpret_cast<CBChangesEveryFrame*>( MappedResource.pData );
     XMStoreFloat4x4( &pCB->mWorldViewProj, XMMatrixTranspose( mWorldViewProjection ) );
     XMStoreFloat4x4( &pCB->mHeadmHeadWorldViewProjection, XMMatrixTranspose(mHeadWorldViewProjection));
-    XMStoreFloat4x4(&pCB->mHeadWord, XMMatrixTranspose(g_Head_World));
-    XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
     XMStoreFloat4x4(&pCB->mRightLeg, XMMatrixTranspose(mTranslateRightLeg));
     XMStoreFloat4x4(&pCB->mLeftLeg, XMMatrixTranspose(mTranslateleftLeg));
+    XMStoreFloat4x4(&pCB->mHeadWord, XMMatrixTranspose(g_Head_World));
+    XMStoreFloat4x4( &pCB->mWorld, XMMatrixTranspose( g_World ) );
    
     pCB->vMisc.x = g_fModelPuffiness;
     pCB->vTime.x = g_time;
