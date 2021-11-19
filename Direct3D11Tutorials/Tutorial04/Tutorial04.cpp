@@ -63,15 +63,19 @@ ID3D11InputLayout* g_pVertexLayout = nullptr;
 ID3D11Buffer* g_pVertexBuffer = nullptr;
 ID3D11Buffer* g_pIndexBuffer = nullptr;
 ID3D11Buffer* g_pConstantBuffer = nullptr;
-ID3D11Buffer* g_pConstantBuffer_1= nullptr;
+ID3D11Buffer* g_pConstantBuffer_1 = nullptr;
 ID3D11Buffer* g_pVertexBuffer_1 = nullptr;
 ID3D11Buffer* g_pIndexBuffer_1 = nullptr;
+ID3D11Buffer* g_pVertexBuffer_2 = nullptr;
+ID3D11Buffer* g_pIndexBuffer_2 = nullptr;
 XMMATRIX                g_World;
 XMMATRIX                g_View;
 XMMATRIX                g_View_1;
 XMMATRIX                g_Projection;
-vector<int>             indices;
 XMMATRIX                g_World1;
+XMMATRIX                g_World2;
+XMMATRIX                g_View_2;
+UINT                    IndexCount;
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -418,6 +422,8 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
+    D3D11_BUFFER_DESC bd = {};
+    //-------------------------------------------------------------ground mesh---------------------------------------------------------
     SimpleVertex verticesDummy[200];
     int index = 0;
     float difference = 0.5f;
@@ -467,8 +473,6 @@ HRESULT InitDevice()
                 verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 
             }
-
-
             startingPosition -= 0.25f;
             index += 1;
         }
@@ -476,7 +480,6 @@ HRESULT InitDevice()
         startingPosition = 1.5f;
     }
 
-    D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(verticesDummy);
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -488,13 +491,6 @@ HRESULT InitDevice()
     hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
     if (FAILED(hr))
         return hr;
-
-    // Set vertex buffer
-    UINT stride = sizeof(SimpleVertex);
-    UINT offset = 0;
-
-    // Set vertex buffer
-    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 
     // Create index buffer
     int k = 0;
@@ -518,16 +514,6 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    // Create the constant buffer
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(ConstantBuffer);
-    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    bd.CPUAccessFlags = 0;
-    //bd.MiscFlags = 0;
-    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer);
-    if (FAILED(hr))
-        return hr;
-
     // Initialize the world matrix
     g_World = XMMatrixIdentity();
 
@@ -536,36 +522,35 @@ HRESULT InitDevice()
     XMVECTOR At = XMVectorSet(-1.2f, 0.2f, 0.4f, 0.0f);
     XMVECTOR Up = XMVectorSet(0.1f, -0.15f, 0.2f, 0.0f);
     g_View = XMMatrixLookAtLH(Eye, At, Up);
+    //----------------------------------------------------------------------------------------------------------------------
 
+
+
+
+    //-------------------------------------------------------------box---------------------------------------------------------
     // Create vertex buffer
     SimpleVertex vertices[] =
     {
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
         { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
     };
-    D3D11_BUFFER_DESC bd_1 = {};
-    bd_1.Usage = D3D11_USAGE_DEFAULT;
-    bd_1.ByteWidth = sizeof(SimpleVertex) * 8;
-    bd_1.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bd_1.CPUAccessFlags = 0;
+
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SimpleVertex) * 8;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
 
     D3D11_SUBRESOURCE_DATA InitData_1 = {};
     InitData_1.pSysMem = vertices;
-    hr = g_pd3dDevice->CreateBuffer(&bd_1, &InitData_1, &g_pVertexBuffer_1);
+    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_1, &g_pVertexBuffer_1);
     if (FAILED(hr))
         return hr;
-
-    // Set vertex buffer
-    UINT stride_1 = sizeof(SimpleVertex);
-    UINT offset_1 = 0;
-
-    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride_1, &offset_1);
 
     // Create index buffer
     WORD indices[] =
@@ -588,12 +573,12 @@ HRESULT InitDevice()
         6,4,5,
         7,4,6,
     };
-    bd_1.Usage = D3D11_USAGE_DEFAULT;
-    bd_1.ByteWidth = sizeof(WORD) * 36;
-    bd_1.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    bd_1.CPUAccessFlags = 0;
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(WORD) * 36;
+    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bd.CPUAccessFlags = 0;
     InitData_1.pSysMem = indices;
-    hr = g_pd3dDevice->CreateBuffer(&bd_1, &InitData_1, &g_pIndexBuffer_1);
+    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_1, &g_pIndexBuffer_1);
     if (FAILED(hr))
         return hr;
 
@@ -606,22 +591,216 @@ HRESULT InitDevice()
     XMVECTOR Up_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_View_1 = XMMatrixLookAtLH(Eye_1, At_1, Up_1);
 
-    // Create the constant buffer
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    //------------------------------------------------------------sphere----------------------------------------------------------
+
+
+    //float t = (1.0 + sqrt(5.0f) / 2);
+    //SimpleVertex sphere_vertices[] =
+    //{
+    //    /*{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+
+    //     { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+
+    //     { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+
+    //      { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+
+    //      { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+
+    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },*/
+
+    //    XMFLOAT3(-1.0f, t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//0
+    //    XMFLOAT3(1.0f, t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//1
+    //    XMFLOAT3(-1.0f, -t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//2
+    //    XMFLOAT3(1.0f, -t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//3
+
+    //    XMFLOAT3(0.0f, -1.0f, t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//4
+    //    XMFLOAT3(0.0f, 1.0f, t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//5
+    //    XMFLOAT3(0.0f, -1.0f, -t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//6
+    //    XMFLOAT3(0.0f, 1.0f, -t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//7
+
+    //    XMFLOAT3(t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//8
+    //    XMFLOAT3(t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//9
+    //    XMFLOAT3(-t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//10
+    //    XMFLOAT3(-t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//11
+    //};
+
+    SimpleVertex sphere_vertices[102];
+     float radius = 2.0f;
+      int stackCount = 10;
+      int sliceCount = 10;
+      float phiStep = (float)XM_PI / stackCount;
+      float thetaStep = 2.0f * (float)XM_PI / sliceCount;
+      int sphere_vertex_index = 0;
+      XMFLOAT3 Pos;
+      Pos.x = 0.0f;
+      Pos.y = +radius;
+      Pos.z = 0.0f;
+
+      sphere_vertices[sphere_vertex_index].Pos = Pos;
+      sphere_vertex_index++;
+      for (int i = 1; i <= stackCount - 1; i++) {
+          float phi = phiStep;
+          for (int j = 0; j <= sliceCount; j++) {
+              float theta = j * thetaStep;
+              XMFLOAT3 Pos;
+              Pos.x = radius * sin(phi) * cos(theta);
+              Pos.y = radius * cos(phi);
+              Pos.z = radius* sin(phi)* sin(theta);
+              sphere_vertices[sphere_vertex_index].Pos = Pos;
+              sphere_vertex_index++;
+          }
+      }
+      Pos.x = 0.0f;
+      Pos.y = -radius;
+      Pos.z = 0.0f;
+      sphere_vertices[sphere_vertex_index].Pos = Pos;
+
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(sphere_vertices);
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA InitData_2 = {};
+    InitData_2.pSysMem = sphere_vertices;
+    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pVertexBuffer_2);
+    if (FAILED(hr))
+        return hr;
+
+
+    //WORD sphere_indices[] =
+    //{
+    //     3,1,0,
+    //    2,1,3,
+
+    //    0,5,4,
+    //    1,5,0,
+
+    //    3,4,7,
+    //    0,4,3,
+
+    //    1,6,5,
+    //    2,6,1,
+
+    //    2,7,6,
+    //    3,7,2,
+
+    //    6,4,5,
+    //    7,4,6,
+    //    //0, 1, 2,    // side 1
+    //    //2, 1, 3,
+
+    //    //4, 5, 6,    // side 2
+    //    //6, 5, 7,
+
+    //    //8, 9, 10,    // side 3
+    //    //10, 9, 11,
+
+    //    //12, 13, 14,    // side 4
+    //    //14, 13, 15,
+
+    //    //16, 17, 18,    // side 5
+    //    //18, 17, 19,
+
+    //    //20, 21, 22,    // side 6
+    //    //22, 21, 23,
+
+    //};
+
+    WORD sphere_indices[540];
+    int indices_index = 0;
+    for (auto i = 1; i <= sliceCount; ++i)
+    {
+        sphere_indices[indices_index]= 0;
+        sphere_indices[indices_index + 1] = i+1;
+        sphere_indices[indices_index + 2] = i;
+        indices_index += 3;
+    }
+
+
+    auto baseIndex = 1;
+    auto ringVertexCount = sliceCount + 1;
+    for (auto i = 0; i < stackCount - 2; ++i)
+    {
+        for (auto j = 0; j < sliceCount; ++j)
+        {
+            sphere_indices[indices_index] = (baseIndex + i * ringVertexCount + j);
+            sphere_indices[indices_index +1] = (baseIndex + i * ringVertexCount + j + 1);
+            sphere_indices[indices_index +2] = (baseIndex + (i + 1) * ringVertexCount + j);
+
+            sphere_indices[indices_index +3] = (baseIndex + (i + 1) * ringVertexCount + j);
+            sphere_indices[indices_index +4] = (baseIndex + i * ringVertexCount + j + 1);
+            sphere_indices[indices_index +5] = (baseIndex + (i + 1) * ringVertexCount + j + 1);
+            indices_index += 6;
+        }
+    }
+
+    auto southPoleIndex = ARRAYSIZE(sphere_vertices) - 1;
+
+    // Offset the indices to the index of the first vertex in the last ring.
+    baseIndex = southPoleIndex - ringVertexCount;
+
+    for (auto i = 0; i < sliceCount; ++i)
+    {
+        sphere_indices[indices_index] = (southPoleIndex);
+        sphere_indices[indices_index +1] = (baseIndex + i);
+        sphere_indices[indices_index +2] = (baseIndex + i + 1);
+        indices_index += 3;
+    }
+
+    IndexCount = (UINT)ARRAYSIZE(sphere_indices);
+
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(sphere_indices);
+    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+    InitData_2.pSysMem = sphere_indices;
+    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pIndexBuffer_2);
+    if (FAILED(hr))
+        return hr;
+
+    // Initialize the world matrix
+    g_World2 = XMMatrixIdentity();
+
+    // Initialize the view matrix
+    XMVECTOR Eye_2 = XMVectorSet(0.0f, 1.0f, -6.0f, 0.0f);
+    XMVECTOR At_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    g_View_2 = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
+
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+     // Create the constant buffer
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(ConstantBuffer);
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
     //bd.MiscFlags = 0;
-    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer_1);
+    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer);
     if (FAILED(hr))
         return hr;
-
-    // Set index buffer
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R32_UINT, 1);
-
-    // Set primitive topology
-    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
     // Initialize the projection matrix
     g_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / (FLOAT)height, 0.01f, 100.0f);
@@ -638,7 +817,7 @@ void CleanupDevice()
     if (g_pImmediateContext) g_pImmediateContext->ClearState();
 
     if (g_pConstantBuffer) g_pConstantBuffer->Release();
-   // if (g_pConstantBuffer_1) g_pConstantBuffer_1->Release();
+    if (g_pConstantBuffer_1) g_pConstantBuffer_1->Release();
     if (g_pVertexBuffer) g_pVertexBuffer->Release();
     if (g_pIndexBuffer) g_pIndexBuffer->Release();
     if (g_pVertexBuffer_1) g_pVertexBuffer_1->Release();
@@ -714,34 +893,92 @@ void Render()
     //
     // Clear the back buffer
     //
-    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::Indigo);
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::SeaShell);
 
     //
     // Update variables
     //
     ConstantBuffer cb;
-    XMMATRIX mScale = XMMatrixScaling(-5.2f, 1.5f, -3.0f);
+    XMMATRIX mScale = XMMatrixScaling(-6.2f, 2.5f, -3.0f);
     g_World = XMMatrixIdentity();
     g_World *= mScale;
     cb.mWorld = XMMatrixTranspose(g_World);
     cb.mView = XMMatrixTranspose(g_View);
     cb.mProjection = XMMatrixTranspose(g_Projection);
+    UINT stride = sizeof(SimpleVertex);
+    UINT offset = 0;
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed((188), 0, 0);
+    g_pImmediateContext->DrawIndexed(188, 0, 0);
 
     ConstantBuffer cb_1;
+    XMMATRIX mScale1 = XMMatrixScaling(0.4f, 1.0f, 0.6f);
+    XMMATRIX mTranslate1 = XMMatrixTranslation(-9.0f, 1.0f, -1.0f);
     g_World1 = XMMatrixIdentity();
+    g_World1 *= mTranslate1 * mScale1;
     cb_1.mWorld = XMMatrixTranspose(g_World1);
     cb_1.mView = XMMatrixTranspose(g_View_1);
     cb_1.mProjection = XMMatrixTranspose(g_Projection);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer_1, 0, nullptr, &cb_1, 0, 0);
+    UINT stride1 = sizeof(SimpleVertex);
+    UINT offset1 = 0;
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride1, &offset1);
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R16_UINT, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_1, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pConstantBuffer_1);
+    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed((188), 0, 0);        
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+
+    ConstantBuffer cb_2;
+     //XMMATRIX mScale1 = XMMatrixScaling(0.4f, 1.0f, 0.6f);
+    
+   
+    g_World2 = XMMatrixIdentity();
+    XMMATRIX mTranslate2 = XMMatrixTranslation(4 * sin(t), sin(t), 0.0f);;
+    g_World2 *= mTranslate2;
+   /* if (tan(t * 5) < 0) {
+        mTranslate2 = XMMatrixTranslation(4.0f, 0.5f, 0.0f);
+        g_World2 *= mTranslate2;
+    }
+    else if (tan(t * 10) < 1) {
+        mTranslate2 = XMMatrixTranslation(3.0f, 1.0f, 0.0f);
+        g_World2 *= mTranslate2;
+    }
+     else if (tan(t * 20) > 2) {
+        mTranslate2 = XMMatrixTranslation(2.0f, 1.5f, 0.0f);
+        g_World2 *= mTranslate2;
+    }
+    else if (cos(t * 2.5) < 3) {
+        mTranslate2 = XMMatrixTranslation(1.0f, 0.5f, 0.0f);
+        g_World2 *= mTranslate2;
+    }
+    else if (sin(t * 2.5) < 4) {
+        mTranslate2 = XMMatrixTranslation(-1.0f, 0.0f, 0.0f);
+        g_World2 *= mTranslate2;
+    }*/
+   
+    
+    cb_2.mWorld = XMMatrixTranspose(g_World2);
+    cb_2.mView = XMMatrixTranspose(g_View_2);
+    cb_2.mProjection = XMMatrixTranspose(g_Projection);
+    UINT stride2 = sizeof(SimpleVertex);
+    UINT offset2 = 0;
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_2, &stride2, &offset2);
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_2, DXGI_FORMAT_R16_UINT, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_2, 0, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pConstantBuffer);
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->DrawIndexed(300, 0, 0);
+
 
     //
     // Present our back buffer to our front buffer
