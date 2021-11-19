@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------
+
 // File: Tutorial04.cpp
 //
 // This application displays a 3D cube using Direct3D 11
@@ -17,9 +17,12 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
-#include "DDSTextureLoader.h"
+#include <d3d11.h>
 #include "resource.h"
 
+#include <vector>
+
+using namespace std;
 using namespace DirectX;
 
 //--------------------------------------------------------------------------------------
@@ -28,8 +31,7 @@ using namespace DirectX;
 struct SimpleVertex
 {
     XMFLOAT3 Pos;
-    XMFLOAT3 Normal;
-    XMFLOAT2 TexCoord;
+    XMFLOAT4 Color;
 };
 
 
@@ -38,10 +40,6 @@ struct ConstantBuffer
     XMMATRIX mWorld;
     XMMATRIX mView;
     XMMATRIX mProjection;
-    XMMATRIX mTrans_1;
-    XMMATRIX mTrans_2;
-    XMFLOAT4 vColor;
-    XMFLOAT4   vTime;
 };
 
 
@@ -65,27 +63,15 @@ ID3D11InputLayout* g_pVertexLayout = nullptr;
 ID3D11Buffer* g_pVertexBuffer = nullptr;
 ID3D11Buffer* g_pIndexBuffer = nullptr;
 ID3D11Buffer* g_pConstantBuffer = nullptr;
+ID3D11Buffer* g_pConstantBuffer_1= nullptr;
+ID3D11Buffer* g_pVertexBuffer_1 = nullptr;
+ID3D11Buffer* g_pIndexBuffer_1 = nullptr;
 XMMATRIX                g_World;
 XMMATRIX                g_View;
+XMMATRIX                g_View_1;
 XMMATRIX                g_Projection;
-ID3D11Texture2D* g_DepthStencil = nullptr;
-ID3D11DepthStencilView* g_DepthStencilView = nullptr;
-XMMATRIX                g_WorldSecond;
-XMMATRIX                g_ViewSecond;
-XMMATRIX                g_WorldThird;
-XMMATRIX                g_ViewThird;
-XMMATRIX                g_WorldFourth;
-XMMATRIX                g_WorldFive;
-XMMATRIX                g_WorldSix;
-
-
-ID3D11ShaderResourceView* wood_TextureRV = nullptr;
-ID3D11SamplerState* wood_Sampler = nullptr;
-
-ID3D11ShaderResourceView* tile_TextureRV = nullptr;
-ID3D11SamplerState* tile_Sampler = nullptr;
-
-XMFLOAT4 g_vColor(0.7f, 0.7f, 0.7f, 1.0f);
+vector<int>             indices;
+XMMATRIX                g_World1;
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -353,60 +339,7 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    ID3D11RasterizerState* m_rasterizerState = 0;
-    D3D11_RASTERIZER_DESC restDesc;
-    restDesc.CullMode = D3D11_CULL_NONE;
-    restDesc.FillMode = D3D11_FILL_SOLID;
-    restDesc.SlopeScaledDepthBias = 0.0f;
-    restDesc.ScissorEnable = false;
-    restDesc.DepthBias = 0;
-    restDesc.DepthBiasClamp = 0.0f;
-    restDesc.DepthClipEnable = true;
-    restDesc.MultisampleEnable = false;
-
-    hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState);
-    g_pImmediateContext->RSSetState(m_rasterizerState);
-
-    // Create the depth buffer for use with the depth/stencil view.
-    D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
-    ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
-
-    depthStencilBufferDesc.ArraySize = 1;
-    depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    depthStencilBufferDesc.CPUAccessFlags = 0; // No CPU access required.
-    depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthStencilBufferDesc.Width = width;
-    depthStencilBufferDesc.Height = height;
-    depthStencilBufferDesc.MipLevels = 1;
-    depthStencilBufferDesc.SampleDesc.Count = 1;
-    depthStencilBufferDesc.SampleDesc.Quality = 0;
-    depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-
-    hr = g_pd3dDevice->CreateTexture2D(&depthStencilBufferDesc, nullptr, &g_DepthStencil);
-    if (FAILED(hr))
-    {
-        return -1;
-    }
-
-    /* D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-     shaderResourceViewDesc.Format = depthStencilBufferDesc.Format;
-     shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-     shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-     shaderResourceViewDesc.Texture2D.MipLevels = 1;
-
-     hr = g_pd3dDevice->CreateShaderResourceView(NULL, &shaderResourceViewDesc, &wood_TextureRV);
-     if (FAILED(hr))
-     {
-         return -1;
-     }*/
-
-    hr = g_pd3dDevice->CreateDepthStencilView(g_DepthStencil, nullptr, &g_DepthStencilView);
-    if (FAILED(hr))
-    {
-        return -1;
-    }
-
-    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_DepthStencilView);
+    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, nullptr);
 
     // Setup the viewport
     D3D11_VIEWPORT vp;
@@ -428,6 +361,21 @@ HRESULT InitDevice()
         return hr;
     }
 
+    // defining ID3D11RasterizerState 
+    ID3D11RasterizerState* m_rasterizerState = 0;
+    D3D11_RASTERIZER_DESC restDesc;
+    restDesc.CullMode = D3D11_CULL_NONE;
+    restDesc.FillMode = D3D11_FILL_WIREFRAME;
+    restDesc.SlopeScaledDepthBias = 0.0f;
+    restDesc.ScissorEnable = false;
+    restDesc.DepthBias = 0;
+    restDesc.DepthBiasClamp = 0.0f;
+    restDesc.DepthClipEnable = true;
+    restDesc.MultisampleEnable = false;
+
+    hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState);
+    g_pImmediateContext->RSSetState(m_rasterizerState);
+
     // Create the vertex shader
     hr = g_pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader);
     if (FAILED(hr))
@@ -440,8 +388,7 @@ HRESULT InitDevice()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE(layout);
 
@@ -471,53 +418,73 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    // Create vertex buffer
-    SimpleVertex vertices[] =
-    {
-        //top
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f) , XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+    SimpleVertex verticesDummy[200];
+    int index = 0;
+    float difference = 0.5f;
+    float startingPosition = 1.5f;
+    float starting = 2.0f;
+    for (int i = 0; i < 10; i++) {
 
-        //bottom
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        for (int j = 0; j < 10; j++) {
+            if (index <= 9) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 19) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(1.430) * startingPosition, sin(1.361) * starting, -sin(1.413) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 29) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 39) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 49) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(1.413) * startingPosition, sin(0.890) * starting, -sin(0.890) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 59) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 69) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.378) * starting, -sin(1.430) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 79) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (index <= 89) {
+                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else {
+                verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 
-        //left side 
-        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+            }
 
-        //right side 
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
 
-        //front
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f),  XMFLOAT2(0.0f, 0.0f) },
+            startingPosition -= 0.25f;
+            index += 1;
+        }
+        starting -= difference;
+        startingPosition = 1.5f;
+    }
 
-        //back
-         { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-    };
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(vertices);
+    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(verticesDummy);
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = 0;
+    //  bd.MiscFlags = 0;
 
     D3D11_SUBRESOURCE_DATA InitData = {};
-    InitData.pSysMem = vertices;
+    InitData.pSysMem = verticesDummy;
     hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
     if (FAILED(hr))
         return hr;
@@ -525,7 +492,80 @@ HRESULT InitDevice()
     // Set vertex buffer
     UINT stride = sizeof(SimpleVertex);
     UINT offset = 0;
+
+    // Set vertex buffer
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+
+    // Create index buffer
+    int k = 0;
+    int indicesX[(2 * 10 * 10) + 10];
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            indicesX[k] = (i * 10 + j); //0
+            indicesX[k + 1] = (i + 1) * 10 + j; //10
+            k += 2;
+        }
+        indicesX[k] = -1;
+        k++;
+    }
+
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(int) * ARRAYSIZE(indicesX);
+    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+    InitData.pSysMem = indicesX;
+    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
+    if (FAILED(hr))
+        return hr;
+
+    // Create the constant buffer
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(ConstantBuffer);
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bd.CPUAccessFlags = 0;
+    //bd.MiscFlags = 0;
+    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer);
+    if (FAILED(hr))
+        return hr;
+
+    // Initialize the world matrix
+    g_World = XMMatrixIdentity();
+
+    // Initialize the view matrix
+    XMVECTOR Eye = XMVectorSet(1, 1.0f, 1.2f, 0.0f);
+    XMVECTOR At = XMVectorSet(-1.2f, 0.2f, 0.4f, 0.0f);
+    XMVECTOR Up = XMVectorSet(0.1f, -0.15f, 0.2f, 0.0f);
+    g_View = XMMatrixLookAtLH(Eye, At, Up);
+
+    // Create vertex buffer
+    SimpleVertex vertices[] =
+    {
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
+        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+    };
+    D3D11_BUFFER_DESC bd_1 = {};
+    bd_1.Usage = D3D11_USAGE_DEFAULT;
+    bd_1.ByteWidth = sizeof(SimpleVertex) * 8;
+    bd_1.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd_1.CPUAccessFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA InitData_1 = {};
+    InitData_1.pSysMem = vertices;
+    hr = g_pd3dDevice->CreateBuffer(&bd_1, &InitData_1, &g_pVertexBuffer_1);
+    if (FAILED(hr))
+        return hr;
+
+    // Set vertex buffer
+    UINT stride_1 = sizeof(SimpleVertex);
+    UINT offset_1 = 0;
+
+    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride_1, &offset_1);
 
     // Create index buffer
     WORD indices[] =
@@ -533,81 +573,55 @@ HRESULT InitDevice()
         3,1,0,
         2,1,3,
 
+        0,5,4,
+        1,5,0,
+
+        3,4,7,
+        0,4,3,
+
+        1,6,5,
+        2,6,1,
+
+        2,7,6,
+        3,7,2,
+
         6,4,5,
         7,4,6,
-
-        11,9,8,
-        10,9,11,
-
-        14,12,13,
-        15,12,14,
-
-        19,17,16,
-        18,17,19,
-
-        22,20,21,
-        23,20,22
     };
-
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(indices);        // 36 vertices needed for 12 triangles in a triangle list
-    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    bd.CPUAccessFlags = 0;
-    InitData.pSysMem = indices;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
+    bd_1.Usage = D3D11_USAGE_DEFAULT;
+    bd_1.ByteWidth = sizeof(WORD) * 36;
+    bd_1.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bd_1.CPUAccessFlags = 0;
+    InitData_1.pSysMem = indices;
+    hr = g_pd3dDevice->CreateBuffer(&bd_1, &InitData_1, &g_pIndexBuffer_1);
     if (FAILED(hr))
         return hr;
 
-    // Set index buffer
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+    // Initialize the world matrix
+    g_World1 = XMMatrixIdentity();
 
-    // Set primitive topology
-    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // Initialize the view matrix
+    XMVECTOR Eye_1 = XMVectorSet(0.0f, 1.0f, -6.0f, 0.0f);
+    XMVECTOR At_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR Up_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    g_View_1 = XMMatrixLookAtLH(Eye_1, At_1, Up_1);
 
     // Create the constant buffer
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(ConstantBuffer);
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
-    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer);
+    //bd.MiscFlags = 0;
+    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer_1);
     if (FAILED(hr))
         return hr;
 
-    //Load the tile Texture
-    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rocks.dds", nullptr, &tile_TextureRV);
-    if (FAILED(hr))
-        return hr;
+    // Set index buffer
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R32_UINT, 1);
 
-
-    // Create the sample state
-    D3D11_SAMPLER_DESC sampDesc = {};
-    ZeroMemory(&sampDesc, sizeof(sampDesc));
-    sampDesc.Filter = D3D11_FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampDesc.MinLOD = 0;
-    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = g_pd3dDevice->CreateSamplerState(&sampDesc, &wood_Sampler);
-
-    if (FAILED(hr))
-        return hr;
-
-    // Initialize the world matrix
-    g_World = XMMatrixIdentity();
-    g_WorldSecond = XMMatrixIdentity();
-    g_WorldThird = XMMatrixIdentity();
-    g_WorldFourth = XMMatrixIdentity();
-    g_WorldFive = XMMatrixIdentity();
-    g_WorldSix = XMMatrixIdentity();
-
-    // Initialize the view matrix
-
-    XMVECTOR Eye = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
-    XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR Up = XMVectorSet(0.0f, 3.0f, 0.0f, 0.0f);
-    g_View = XMMatrixLookAtLH(Eye, At, Up);
+    // Set primitive topology
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
     // Initialize the projection matrix
     g_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / (FLOAT)height, 0.01f, 100.0f);
@@ -622,13 +636,13 @@ HRESULT InitDevice()
 void CleanupDevice()
 {
     if (g_pImmediateContext) g_pImmediateContext->ClearState();
-    if (wood_TextureRV) wood_TextureRV->Release();
-    if (wood_Sampler) wood_Sampler->Release();
-    if (tile_TextureRV) tile_TextureRV->Release();
-    if (tile_Sampler) tile_Sampler->Release();
+
     if (g_pConstantBuffer) g_pConstantBuffer->Release();
+   // if (g_pConstantBuffer_1) g_pConstantBuffer_1->Release();
     if (g_pVertexBuffer) g_pVertexBuffer->Release();
     if (g_pIndexBuffer) g_pIndexBuffer->Release();
+    if (g_pVertexBuffer_1) g_pVertexBuffer_1->Release();
+    if (g_pIndexBuffer_1) g_pIndexBuffer_1->Release();
     if (g_pVertexLayout) g_pVertexLayout->Release();
     if (g_pVertexShader) g_pVertexShader->Release();
     if (g_pPixelShader) g_pPixelShader->Release();
@@ -693,158 +707,45 @@ void Render()
     }
 
     //
+    // Animate the cube
+    //
+    g_World = XMMatrixRotationY(0.5);
+
+    //
     // Clear the back buffer
     //
-    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::Indigo);
 
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-    // right leg upper part
+    //
+    // Update variables
+    //
     ConstantBuffer cb;
-    XMMATRIX mScale = XMMatrixScaling(0.1f, 1.0f, 0.1f);
-    XMMATRIX mTranslate;
-    g_World = XMMatrixRotationY(0.5);
-    mTranslate = XMMatrixTranslation(0.2f, 0.4f, 0.3f);
-    g_World *= mScale * mTranslate;
+    XMMATRIX mScale = XMMatrixScaling(-5.2f, 1.5f, -3.0f);
+    g_World = XMMatrixIdentity();
+    g_World *= mScale;
     cb.mWorld = XMMatrixTranspose(g_World);
     cb.mView = XMMatrixTranspose(g_View);
     cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-
-    cb.mTrans_1 = XMMatrixTranspose(XMMatrixTranslation(0.2f, 0.4f, 1.3f));
-
-    cb.mTrans_2 = XMMatrixTranspose(XMMatrixTranslation(0.3f, -13.9f, 0.1f));
-
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
+    g_pImmediateContext->DrawIndexed((188), 0, 0);
 
-    // left leg upper part
-    XMMATRIX mScale_2 = XMMatrixScaling(0.1f, 1.0f, 0.1f);
-    XMMATRIX mTranslate_2;
-    g_WorldSecond = XMMatrixRotationY(0.5);
-    mTranslate_2 = XMMatrixTranslation(-0.3f, 0.4f, 0.3f);
-    g_WorldSecond *= mScale_2 * mTranslate_2;
-    cb.mWorld = XMMatrixTranspose(g_WorldSecond);
-    cb.mView = XMMatrixTranspose(g_View);
-    cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.mTrans_1 = XMMatrixTranspose(XMMatrixTranslation(-0.3f, 0.4f, 1.3f));
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    ConstantBuffer cb_1;
+    g_World1 = XMMatrixIdentity();
+    cb_1.mWorld = XMMatrixTranspose(g_World1);
+    cb_1.mView = XMMatrixTranspose(g_View_1);
+    cb_1.mProjection = XMMatrixTranspose(g_Projection);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer_1, 0, nullptr, &cb_1, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pConstantBuffer_1);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
-
-
-    //body
-    XMMATRIX mScale_3 = XMMatrixScaling(0.2f, 0.5f, 0.3f);
-    XMMATRIX mTranslate_3 = XMMatrixTranslation(-0.05f, 1.9f, 0.1f);
-    g_WorldThird = XMMatrixRotationY(0.5);
-    g_WorldThird *= mScale_3 * mTranslate_3;
-    cb.mWorld = XMMatrixTranspose(g_WorldThird);
-    cb.mView = XMMatrixTranspose(g_View);
-    cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
-
-    //right hand
-    XMMATRIX mScale_4 = XMMatrixScaling(0.1f, 0.1f, 1.2f);
-    XMMATRIX mTranslate_4;
-    mTranslate_4 = XMMatrixTranslation(-2.0f, 0.0f, 0.0f);
-    g_WorldFourth = XMMatrixRotationY(0.5);
-    g_WorldFourth *= mScale_4 * mTranslate_4;
-    cb.mWorld = XMMatrixTranspose(g_WorldFourth);
-
-    XMVECTOR Eye_1 = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
-    XMVECTOR At_1 = XMVectorSet(-1.2f, -1.0f, 0.0f, 0.0f);
-    XMVECTOR Up_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    g_ViewSecond = XMMatrixLookAtLH(Eye_1, At_1, Up_1);
-
-    cb.mView = XMMatrixTranspose(g_ViewSecond);
-    cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
-
-    // head
-    XMMATRIX mScale_5 = XMMatrixScaling(0.1f, 0.2f, 0.2f);
-    XMMATRIX mTranslate_5 = XMMatrixTranslation(-0.05f, 2.6f, 0.1f);
-    g_WorldFive = XMMatrixRotationY(0.5);
-    g_WorldFive *= mScale_5 * mTranslate_5;
-    cb.mWorld = XMMatrixTranspose(g_WorldFive);
-    cb.mView = XMMatrixTranspose(g_View);
-    cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
-
-    //left hand
-    XMMATRIX mScale_6 = XMMatrixScaling(0.1f, 0.1f, 1.2f);
-    XMMATRIX mTranslate_6;
-    mTranslate_6 = XMMatrixTranslation(1.5f, 0.0f, 0.0f);
-    g_WorldSix = XMMatrixRotationY(0.5);
-    g_WorldSix *= mScale_6 * mTranslate_6;
-    cb.mWorld = XMMatrixTranspose(g_WorldSix);
-
-    XMVECTOR Eye_2 = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
-    XMVECTOR At_2 = XMVectorSet(0.9f, -1.0f, 0.0f, 0.0f);
-    XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    g_ViewThird = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
-
-    cb.mView = XMMatrixTranspose(g_ViewThird);
-    cb.mProjection = XMMatrixTranspose(g_Projection);
-    cb.vColor = g_vColor;
-    cb.vTime.x = t;
-    g_pImmediateContext->ClearDepthStencilView(g_DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->PSSetShaderResources(0, 1, &tile_TextureRV);
-    g_pImmediateContext->PSSetSamplers(0, 1, &tile_Sampler);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
+    g_pImmediateContext->DrawIndexed((188), 0, 0);        
 
     //
     // Present our back buffer to our front buffer
     //
     g_pSwapChain->Present(0, 0);
 }
+
