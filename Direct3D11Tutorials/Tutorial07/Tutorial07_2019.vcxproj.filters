@@ -35,12 +35,21 @@
     <FxCompile Include="Tutorial07_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="PS_CubeMap.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VS_CubeMap.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="seafloor.dds">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Wood.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Skymap.dds">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

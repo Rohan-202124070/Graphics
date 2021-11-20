@@ -29,6 +29,7 @@ struct SimpleVertex
 {
     XMFLOAT3 Pos;
     XMFLOAT2 Tex;
+    XMFLOAT3 Normal;
 };
 
 struct CBNeverChanges
@@ -45,6 +46,7 @@ struct CBChangesEveryFrame
 {
     XMMATRIX mWorld;
     XMFLOAT4 vMeshColor;
+    XMVECTOR Eye;
 };
 
 
@@ -78,8 +80,11 @@ XMMATRIX                            g_World;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
 XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
-
-
+XMVECTOR                            Eye;
+ID3D11DepthStencilState* g_pDepthStencilStateSky = nullptr;
+ID3D11DepthStencilState* g_pDepthStencilStateCube = nullptr;
+ID3D11RasterizerState* m_rasterizerState_sky = 0;
+ID3D11RasterizerState* m_rasterizerState_cube = 0;
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -347,13 +352,65 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
+
+    D3D11_DEPTH_STENCIL_DESC deDepth;
+    //Depth test parameters
+    deDepth.DepthEnable = false;
+    deDepth.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    deDepth.DepthFunc = D3D11_COMPARISON_LESS;
+
+    //stencil test parameters
+    deDepth.StencilEnable = false;
+    deDepth.StencilReadMask = 0xFF;
+    deDepth.StencilWriteMask = 0xFF;
+
+   /* hr = g_pd3dDevice->CreateDepthStencilState(&deDepth, &g_pDepthStencilStateSky);
+    if (FAILED(hr))
+        return hr;*/
+
+    deDepth.DepthEnable = true;
+    hr = g_pd3dDevice->CreateDepthStencilState(&deDepth, &g_pDepthStencilStateCube);
+    if (FAILED(hr))
+        return hr;
+
+
+    // For SKY ID3D11RasterizerState 
+    D3D11_RASTERIZER_DESC restDesc;
+    restDesc.CullMode = D3D11_CULL_NONE;
+    restDesc.FillMode = D3D11_FILL_SOLID;
+    restDesc.SlopeScaledDepthBias = 0.0f;
+    restDesc.ScissorEnable = false;
+    restDesc.DepthBias = 0;
+    restDesc.DepthBiasClamp = 0.0f;
+    restDesc.DepthClipEnable = true;
+    restDesc.MultisampleEnable = false;
+
+    hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState_sky);
+    g_pImmediateContext->RSSetState(m_rasterizerState_sky);
+
+    // For CUBE
+    D3D11_RASTERIZER_DESC restDesc_cube;
+    restDesc_cube.CullMode = D3D11_CULL_NONE;
+    restDesc_cube.FillMode = D3D11_FILL_SOLID;
+    restDesc_cube.SlopeScaledDepthBias = 0.0f;
+    restDesc_cube.ScissorEnable = false;
+    restDesc_cube.DepthBias = 0;
+    restDesc_cube.DepthBiasClamp = 0.0f;
+    restDesc_cube.DepthClipEnable = true;
+    restDesc_cube.MultisampleEnable = false;
+
+    hr = g_pd3dDevice->CreateRasterizerState(&restDesc_cube, &m_rasterizerState_cube);
+    g_pImmediateContext->RSSetState(m_rasterizerState_cube);
+
+
+
     // Create depth stencil texture
     D3D11_TEXTURE2D_DESC descDepth = {};
     descDepth.Width = width;
     descDepth.Height = height;
     descDepth.MipLevels = 1;
     descDepth.ArraySize = 1;
-    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepth.Format = DXGI_FORMAT_D32_FLOAT;
     descDepth.SampleDesc.Count = 1;
     descDepth.SampleDesc.Quality = 0;
     descDepth.Usage = D3D11_USAGE_DEFAULT;
@@ -372,7 +429,6 @@ HRESULT InitDevice()
     hr = g_pd3dDevice->CreateDepthStencilView( g_pDepthStencil, &descDSV, &g_pDepthStencilView );
     if( FAILED( hr ) )
         return hr;
-
     g_pImmediateContext->OMSetRenderTargets( 1, &g_pRenderTargetView, g_pDepthStencilView );
 
     // Setup the viewport
@@ -387,7 +443,7 @@ HRESULT InitDevice()
 
     // Compile the vertex shader
     ID3DBlob* pVSBlob = nullptr;
-    hr = CompileShaderFromFile( L"Tutorial07.fx", "VS", "vs_4_0", &pVSBlob );
+    hr = CompileShaderFromFile( L"Tutorial07.fx", "VS_CubeMap", "vs_4_0", &pVSBlob );
     if( FAILED( hr ) )
     {
         MessageBox( nullptr,
@@ -408,6 +464,7 @@ HRESULT InitDevice()
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE( layout );
 
@@ -423,7 +480,7 @@ HRESULT InitDevice()
 
     // Compile the pixel shader
     ID3DBlob* pPSBlob = nullptr;
-    hr = CompileShaderFromFile( L"Tutorial07.fx", "PS", "ps_4_0", &pPSBlob );
+    hr = CompileShaderFromFile( L"Tutorial07.fx", "PS_CubeMap", "ps_4_0", &pPSBlob );
     if( FAILED( hr ) )
     {
         MessageBox( nullptr,
@@ -440,35 +497,35 @@ HRESULT InitDevice()
     // Create vertex buffer
     SimpleVertex vertices[] =
     {
-        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(0.0f, 1.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(0.0f, 1.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(0.0f, 1.0f, 0.0f) },
+        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(0.0f, 1.0f, 0.0f) },
 
-        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
+        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(0.0f, -1.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(0.0f, -1.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(0.0f, -1.0f, 0.0f) },
+        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(0.0f, -1.0f, 0.0f) },
 
-        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
+        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(-1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(-1.0f, 0.0f, 0.0f) },
 
-        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
+        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(1.0f, 0.0f, 0.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(1.0f, 0.0f, 0.0f) },
 
-        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
+        { XMFLOAT3( -1.0f, -1.0f, -1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+        { XMFLOAT3( 1.0f, -1.0f, -1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, -1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(0.0f, 0.0f, -1.0f) },
+        { XMFLOAT3( -1.0f, 1.0f, -1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(0.0f, 0.0f, -1.0f) },
 
-        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
+        { XMFLOAT3( -1.0f, -1.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3( 1.0f, -1.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3( 1.0f, 1.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3( -1.0f, 1.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ), XMFLOAT3(0.0f, 0.0f, 1.0f) },
     };
 
     D3D11_BUFFER_DESC bd = {};
@@ -546,16 +603,16 @@ HRESULT InitDevice()
         return hr;
 
     // Load the Texture
-    hr = CreateDDSTextureFromFile( g_pd3dDevice, L"Wood.dds", nullptr, &g_pTextureRV );
+    hr = CreateDDSTextureFromFile( g_pd3dDevice, L"Skymap.dds", nullptr, &g_pTextureRV );
     if( FAILED( hr ) )
         return hr;
 
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_MIRROR;
-    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_MIRROR;
-    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_MIRROR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
@@ -569,7 +626,7 @@ HRESULT InitDevice()
     // Initialize the view matrix
 
     //XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f); //for exercise 4
-    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, -5.0f, 0.0f );
+    Eye = XMVectorSet( 0.0f, 0.0f, -5.0f, 0.0f );
     XMVECTOR At = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
     g_View = XMMatrixLookAtLH( Eye, At, Up );
@@ -669,12 +726,12 @@ void Render()
     }
 
     // Rotate cube around the origin
-    g_World = XMMatrixRotationY( t );
+    //g_World = XMMatrixRotationY( 0.5 );
 
     // Modify the color
-    g_vMeshColor.x = ( sinf( t * 1.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.y = ( cosf( t * 3.0f ) + 1.0f ) * 0.5f;
-    g_vMeshColor.z = ( sinf( t * 5.0f ) + 1.0f ) * 0.5f;
+    g_vMeshColor.x =   -0.0f;
+    g_vMeshColor.y =  0.5f;
+    g_vMeshColor.z =  0.5f;
 
     //
     // Clear the back buffer
@@ -692,20 +749,35 @@ void Render()
     CBChangesEveryFrame cb;
     cb.mWorld = XMMatrixTranspose( g_World );
     cb.vMeshColor = g_vMeshColor;
+    cb.Eye = Eye;
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0 );
-
-    //
-    // Render the cube
-    //
     g_pImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
     g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges );
     g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
-    g_pImmediateContext->PSSetShaderResources( 0, 1, &g_pTextureRV );
-    g_pImmediateContext->PSSetSamplers( 0, 1, &g_pSamplerLinear );
+    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateSky, 1);
+    g_pImmediateContext->RSSetState(m_rasterizerState_sky);
+    g_pImmediateContext->PSSetShaderResources( 1, 1, &g_pTextureRV );
+    g_pImmediateContext->PSSetSamplers( 1, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 36, 0, 0 );
+
+
+    cb.mWorld = XMMatrixTranspose(g_World);
+    cb.vMeshColor = g_vMeshColor;
+    cb.Eye = Eye;
+    g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pCBNeverChanges);
+    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pCBChangeOnResize);
+    g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateCube, 1); 
+    g_pImmediateContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
+    g_pImmediateContext->PSSetShaderResources(1, 1, &g_pTextureRV);
+    g_pImmediateContext->PSSetSamplers(1, 1, &g_pSamplerLinear);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     //
     // Present our back buffer to our front buffer
