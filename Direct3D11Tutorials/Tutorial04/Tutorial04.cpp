@@ -40,6 +40,9 @@ struct ConstantBuffer
     XMMATRIX mWorld;
     XMMATRIX mView;
     XMMATRIX mProjection;
+    XMMATRIX mTranslation;
+    XMMATRIX mScale;
+    XMFLOAT4 vTime;
 };
 
 
@@ -59,6 +62,8 @@ IDXGISwapChain1* g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 ID3D11VertexShader* g_pVertexShader = nullptr;
 ID3D11PixelShader* g_pPixelShader = nullptr;
+ID3D11VertexShader* g_pVertexShader_sphere = nullptr;
+ID3D11PixelShader* g_pPixelShader_sphere = nullptr;
 ID3D11InputLayout* g_pVertexLayout = nullptr;
 ID3D11Buffer* g_pVertexBuffer = nullptr;
 ID3D11Buffer* g_pIndexBuffer = nullptr;
@@ -76,6 +81,7 @@ XMMATRIX                g_World1;
 XMMATRIX                g_World2;
 XMMATRIX                g_View_2;
 UINT                    IndexCount;
+XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -388,6 +394,24 @@ HRESULT InitDevice()
         return hr;
     }
 
+    // Compile the vertex shader
+    ID3DBlob* pVSBlob_sphere = nullptr;
+    hr = CompileShaderFromFile(L"Tutorial04.fx", "VS_Sphere", "vs_4_0", &pVSBlob_sphere);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the vertex shader
+    hr = g_pd3dDevice->CreateVertexShader(pVSBlob_sphere->GetBufferPointer(), pVSBlob_sphere->GetBufferSize(), nullptr, &g_pVertexShader_sphere);
+    if (FAILED(hr))
+    {
+        pVSBlob_sphere->Release();
+        return hr;
+    }
+
     // Define the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
@@ -419,6 +443,21 @@ HRESULT InitDevice()
     // Create the pixel shader
     hr = g_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader);
     pPSBlob->Release();
+    if (FAILED(hr))
+        return hr;
+
+    // Compile the pixel shader
+    ID3DBlob* pPSBlob_Sphere = nullptr;
+    hr = CompileShaderFromFile(L"Tutorial04.fx", "PS_Sphere", "ps_4_0", &pPSBlob_Sphere);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+    // Create the pixel shader
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob_Sphere->GetBufferPointer(), pPSBlob_Sphere->GetBufferSize(), nullptr, &g_pPixelShader_sphere);
+    pPSBlob_Sphere->Release();
     if (FAILED(hr))
         return hr;
 
@@ -590,66 +629,14 @@ HRESULT InitDevice()
     XMVECTOR At_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR Up_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_View_1 = XMMatrixLookAtLH(Eye_1, At_1, Up_1);
-
-
     //----------------------------------------------------------------------------------------------------------------------
 
     //------------------------------------------------------------sphere----------------------------------------------------------
 
-
-    //float t = (1.0 + sqrt(5.0f) / 2);
-    //SimpleVertex sphere_vertices[] =
-    //{
-    //    /*{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-
-    //     { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-
-    //     { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-
-    //      { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-
-    //      { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-
-    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },*/
-
-    //    XMFLOAT3(-1.0f, t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//0
-    //    XMFLOAT3(1.0f, t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//1
-    //    XMFLOAT3(-1.0f, -t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//2
-    //    XMFLOAT3(1.0f, -t, 1.3f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),//3
-
-    //    XMFLOAT3(0.0f, -1.0f, t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//4
-    //    XMFLOAT3(0.0f, 1.0f, t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//5
-    //    XMFLOAT3(0.0f, -1.0f, -t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//6
-    //    XMFLOAT3(0.0f, 1.0f, -t), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),//7
-
-    //    XMFLOAT3(t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//8
-    //    XMFLOAT3(t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//9
-    //    XMFLOAT3(-t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//10
-    //    XMFLOAT3(-t, 0.0f, 1.3f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),//11
-    //};
-
-    SimpleVertex sphere_vertices[102];
+    SimpleVertex sphere_vertices[401];
      float radius = 2.0f;
-      int stackCount = 10;
-      int sliceCount = 10;
+      int stackCount = 20;
+      int sliceCount = 20;
       float phiStep = (float)XM_PI / stackCount;
       float thetaStep = 2.0f * (float)XM_PI / sliceCount;
       int sphere_vertex_index = 0;
@@ -661,7 +648,7 @@ HRESULT InitDevice()
       sphere_vertices[sphere_vertex_index].Pos = Pos;
       sphere_vertex_index++;
       for (int i = 1; i <= stackCount - 1; i++) {
-          float phi = phiStep;
+          float phi = i * phiStep;
           for (int j = 0; j <= sliceCount; j++) {
               float theta = j * thetaStep;
               XMFLOAT3 Pos;
@@ -689,46 +676,7 @@ HRESULT InitDevice()
         return hr;
 
 
-    //WORD sphere_indices[] =
-    //{
-    //     3,1,0,
-    //    2,1,3,
-
-    //    0,5,4,
-    //    1,5,0,
-
-    //    3,4,7,
-    //    0,4,3,
-
-    //    1,6,5,
-    //    2,6,1,
-
-    //    2,7,6,
-    //    3,7,2,
-
-    //    6,4,5,
-    //    7,4,6,
-    //    //0, 1, 2,    // side 1
-    //    //2, 1, 3,
-
-    //    //4, 5, 6,    // side 2
-    //    //6, 5, 7,
-
-    //    //8, 9, 10,    // side 3
-    //    //10, 9, 11,
-
-    //    //12, 13, 14,    // side 4
-    //    //14, 13, 15,
-
-    //    //16, 17, 18,    // side 5
-    //    //18, 17, 19,
-
-    //    //20, 21, 22,    // side 6
-    //    //22, 21, 23,
-
-    //};
-
-    WORD sphere_indices[540];
+    WORD sphere_indices[2280];
     int indices_index = 0;
     for (auto i = 1; i <= sliceCount; ++i)
     {
@@ -755,12 +703,9 @@ HRESULT InitDevice()
             indices_index += 6;
         }
     }
-
     auto southPoleIndex = ARRAYSIZE(sphere_vertices) - 1;
-
     // Offset the indices to the index of the first vertex in the last ring.
     baseIndex = southPoleIndex - ringVertexCount;
-
     for (auto i = 0; i < sliceCount; ++i)
     {
         sphere_indices[indices_index] = (southPoleIndex);
@@ -788,7 +733,6 @@ HRESULT InitDevice()
     XMVECTOR At_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_View_2 = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
-
 
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -825,6 +769,8 @@ void CleanupDevice()
     if (g_pVertexLayout) g_pVertexLayout->Release();
     if (g_pVertexShader) g_pVertexShader->Release();
     if (g_pPixelShader) g_pPixelShader->Release();
+    if (g_pVertexShader_sphere) g_pVertexShader_sphere->Release();
+    if (g_pPixelShader_sphere) g_pPixelShader_sphere->Release();
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
     if (g_pSwapChain1) g_pSwapChain1->Release();
     if (g_pSwapChain) g_pSwapChain->Release();
@@ -893,11 +839,10 @@ void Render()
     //
     // Clear the back buffer
     //
-    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::SeaShell);
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::DodgerBlue);
 
-    //
-    // Update variables
-    //
+
+    //for the ground
     ConstantBuffer cb;
     XMMATRIX mScale = XMMatrixScaling(-6.2f, 2.5f, -3.0f);
     g_World = XMMatrixIdentity();
@@ -916,9 +861,10 @@ void Render()
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
     g_pImmediateContext->DrawIndexed(188, 0, 0);
 
+    //for Box
     ConstantBuffer cb_1;
     XMMATRIX mScale1 = XMMatrixScaling(0.4f, 1.0f, 0.6f);
-    XMMATRIX mTranslate1 = XMMatrixTranslation(-9.0f, 1.0f, -1.0f);
+    XMMATRIX mTranslate1 = XMMatrixTranslation(-14.0f, 1.0f, -1.0f);
     g_World1 = XMMatrixIdentity();
     g_World1 *= mTranslate1 * mScale1;
     cb_1.mWorld = XMMatrixTranspose(g_World1);
@@ -937,47 +883,30 @@ void Render()
 
 
     ConstantBuffer cb_2;
-     //XMMATRIX mScale1 = XMMatrixScaling(0.4f, 1.0f, 0.6f);
-    
-   
     g_World2 = XMMatrixIdentity();
-    XMMATRIX mTranslate2 = XMMatrixTranslation(4 * sin(t), sin(t), 0.0f);;
-    g_World2 *= mTranslate2;
-   /* if (tan(t * 5) < 0) {
-        mTranslate2 = XMMatrixTranslation(4.0f, 0.5f, 0.0f);
-        g_World2 *= mTranslate2;
-    }
-    else if (tan(t * 10) < 1) {
-        mTranslate2 = XMMatrixTranslation(3.0f, 1.0f, 0.0f);
-        g_World2 *= mTranslate2;
-    }
-     else if (tan(t * 20) > 2) {
-        mTranslate2 = XMMatrixTranslation(2.0f, 1.5f, 0.0f);
-        g_World2 *= mTranslate2;
-    }
-    else if (cos(t * 2.5) < 3) {
-        mTranslate2 = XMMatrixTranslation(1.0f, 0.5f, 0.0f);
-        g_World2 *= mTranslate2;
-    }
-    else if (sin(t * 2.5) < 4) {
-        mTranslate2 = XMMatrixTranslation(-1.0f, 0.0f, 0.0f);
-        g_World2 *= mTranslate2;
-    }*/
-   
-    
+    //for bouncing
+    //XMMATRIX mTranslate2 = XMMatrixTranslation(0, sin(t) * 0.5, 0.0f);
+
+    //for flying
+    XMMATRIX mScale2 = XMMatrixScaling(0.4f, 0.3f, 0.6f);
+    XMMATRIX mTranslate2 = XMMatrixTranslation(2 * sin(t), 1 + sin(t), 0.0f);
+
     cb_2.mWorld = XMMatrixTranspose(g_World2);
     cb_2.mView = XMMatrixTranspose(g_View_2);
     cb_2.mProjection = XMMatrixTranspose(g_Projection);
+    cb_2.mTranslation = XMMatrixTranspose(mTranslate2);
+    cb_2.mScale = mScale2;
+    cb_2.vTime = XMFLOAT4(t, 0, 0 ,0);
     UINT stride2 = sizeof(SimpleVertex);
     UINT offset2 = 0;
-    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_2, &stride2, &offset2);
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_2, DXGI_FORMAT_R16_UINT, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_2, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader_sphere, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed(300, 0, 0);
+    g_pImmediateContext->PSSetShader(g_pPixelShader_sphere, nullptr, 0);
+    g_pImmediateContext->DrawIndexedInstanced(IndexCount, 1, 0, 0, 0);
 
 
     //

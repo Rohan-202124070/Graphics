@@ -2,15 +2,21 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04.exe</FullPath>
+      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_PS.cso</FullPath>
+      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\PixelShader.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_VS.cso</FullPath>
+      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04_PS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04_VS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\VertexShader.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

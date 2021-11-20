@@ -1,11 +1,54 @@
-﻿\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(63,9-37): warning X3206: implicit truncation of vector type
-\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(64,9-40): warning X3206: implicit truncation of vector type
-\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(96,9-67): warning X3206: implicit truncation of vector type
-  
-  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_PS.cso
-\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(63,9-37): warning X3206: implicit truncation of vector type
-\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(64,9-40): warning X3206: implicit truncation of vector type
-\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.fx(96,9-67): warning X3206: implicit truncation of vector type
-  
-  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04_VS.cso
-  Tutorial04_2019.vcxproj -> \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial04.exe
+﻿  compilation object save succeeded; see C:\Graphics\Direct3D11Tutorials\Debug\PixelShader.cso
+  compilation object save succeeded; see C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04_PS.cso
+  compilation object save succeeded; see C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04_VS.cso
+  compilation object save succeeded; see C:\Graphics\Direct3D11Tutorials\Debug\VertexShader.cso
+  Tutorial04.cpp
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(475,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(475,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(475,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(479,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(479,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(479,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(483,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(483,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(483,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(487,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(487,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(487,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(491,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(491,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(491,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(495,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(495,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(495,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(499,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(499,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(499,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(503,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(503,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(503,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(507,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(507,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(507,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(511,119): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(511,95): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(511,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(654,27): warning C4456: declaration of 'Pos' hides previous local declaration
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(643,16): message : see declaration of 'Pos'
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(655,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(656,30): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(657,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(684,46): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(685,45): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(696,78): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(697,85): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(698,87): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(700,87): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(701,85): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(702,91): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(711,42): warning C4244: '=': conversion from 'unsigned int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(712,55): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(713,59): warning C4244: '=': conversion from 'int' to 'WORD', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(892,62): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Graphics\Direct3D11Tutorials\Tutorial04\Tutorial04.cpp(892,50): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Tutorial04_2019.vcxproj -> C:\Graphics\Direct3D11Tutorials\Debug\Tutorial04.exe
