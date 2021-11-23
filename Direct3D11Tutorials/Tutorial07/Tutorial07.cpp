@@ -68,15 +68,18 @@ ID3D11Texture2D*                    g_pDepthStencil = nullptr;
 ID3D11DepthStencilView*             g_pDepthStencilView = nullptr;
 ID3D11VertexShader*                 g_pVertexShader = nullptr;
 ID3D11PixelShader*                  g_pPixelShader = nullptr;
+ID3D11VertexShader*                 g_pVertexShader_cubeMap = nullptr;
+ID3D11PixelShader*                  g_pPixelShader_cubeMap = nullptr;
 ID3D11InputLayout*                  g_pVertexLayout = nullptr;
 ID3D11Buffer*                       g_pVertexBuffer = nullptr;
 ID3D11Buffer*                       g_pIndexBuffer = nullptr;
 ID3D11Buffer*                       g_pCBNeverChanges = nullptr;
 ID3D11Buffer*                       g_pCBChangeOnResize = nullptr;
 ID3D11Buffer*                       g_pCBChangesEveryFrame = nullptr;
-ID3D11ShaderResourceView*           g_pTextureRV = nullptr;
-ID3D11SamplerState*                 g_pSamplerLinear = nullptr;
+ID3D11ShaderResourceView*           sky_TextureRV = nullptr;
+ID3D11SamplerState*                 sky_Sampler = nullptr;
 XMMATRIX                            g_World;
+XMMATRIX                            g_World_1;
 XMMATRIX                            g_View;
 XMMATRIX                            g_Projection;
 XMFLOAT4                            g_vMeshColor( 0.7f, 0.7f, 0.7f, 1.0f );
@@ -85,6 +88,7 @@ ID3D11DepthStencilState* g_pDepthStencilStateSky = nullptr;
 ID3D11DepthStencilState* g_pDepthStencilStateCube = nullptr;
 ID3D11RasterizerState* m_rasterizerState_sky = 0;
 ID3D11RasterizerState* m_rasterizerState_cube = 0;
+ID3D11RasterizerState* m_rasterizerState = 0;
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -364,7 +368,7 @@ HRESULT InitDevice()
     deDepth.StencilReadMask = 0xFF;
     deDepth.StencilWriteMask = 0xFF;
 
-   /* hr = g_pd3dDevice->CreateDepthStencilState(&deDepth, &g_pDepthStencilStateSky);
+    /*hr = g_pd3dDevice->CreateDepthStencilState(&deDepth, &g_pDepthStencilStateSky);
     if (FAILED(hr))
         return hr;*/
 
@@ -375,17 +379,17 @@ HRESULT InitDevice()
 
 
     // For SKY ID3D11RasterizerState 
-    D3D11_RASTERIZER_DESC restDesc;
-    restDesc.CullMode = D3D11_CULL_NONE;
-    restDesc.FillMode = D3D11_FILL_SOLID;
-    restDesc.SlopeScaledDepthBias = 0.0f;
-    restDesc.ScissorEnable = false;
-    restDesc.DepthBias = 0;
-    restDesc.DepthBiasClamp = 0.0f;
-    restDesc.DepthClipEnable = true;
-    restDesc.MultisampleEnable = false;
+    D3D11_RASTERIZER_DESC restDescCube;
+    restDescCube.CullMode = D3D11_CULL_NONE;
+    restDescCube.FillMode = D3D11_FILL_SOLID;
+    restDescCube.SlopeScaledDepthBias = 0.0f;
+    restDescCube.ScissorEnable = false;
+    restDescCube.DepthBias = 0;
+    restDescCube.DepthBiasClamp = 0.0f;
+    restDescCube.DepthClipEnable = true;
+    restDescCube.MultisampleEnable = false;
 
-    hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState_sky);
+    hr = g_pd3dDevice->CreateRasterizerState(&restDescCube, &m_rasterizerState_sky);
     g_pImmediateContext->RSSetState(m_rasterizerState_sky);
 
     // For CUBE
@@ -401,6 +405,18 @@ HRESULT InitDevice()
 
     hr = g_pd3dDevice->CreateRasterizerState(&restDesc_cube, &m_rasterizerState_cube);
     g_pImmediateContext->RSSetState(m_rasterizerState_cube);
+
+    D3D11_RASTERIZER_DESC restDesc;
+    restDesc.CullMode = D3D11_CULL_FRONT;
+    restDesc.FillMode = D3D11_FILL_SOLID;
+    restDesc.SlopeScaledDepthBias = 0.0f;
+    restDesc.ScissorEnable = false;
+    restDesc.DepthBias = 0;
+    restDesc.DepthBiasClamp = 0.0f;
+    restDesc.DepthClipEnable = true;
+    restDesc.MultisampleEnable = false;
+    hr = g_pd3dDevice->CreateRasterizerState(&restDesc_cube, &m_rasterizerState);
+    g_pImmediateContext->RSSetState(m_rasterizerState);
 
 
 
@@ -442,8 +458,8 @@ HRESULT InitDevice()
     g_pImmediateContext->RSSetViewports( 1, &vp );
 
     // Compile the vertex shader
-    ID3DBlob* pVSBlob = nullptr;
-    hr = CompileShaderFromFile( L"Tutorial07.fx", "VS_CubeMap", "vs_4_0", &pVSBlob );
+    ID3DBlob* pVSBlob_cubeMap = nullptr;
+    hr = CompileShaderFromFile( L"Tutorial07.fx", "VS_CubeMap", "vs_4_0", &pVSBlob_cubeMap);
     if( FAILED( hr ) )
     {
         MessageBox( nullptr,
@@ -452,12 +468,30 @@ HRESULT InitDevice()
     }
 
     // Create the vertex shader
-    hr = g_pd3dDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader );
+    hr = g_pd3dDevice->CreateVertexShader(pVSBlob_cubeMap->GetBufferPointer(), pVSBlob_cubeMap->GetBufferSize(), nullptr, &g_pVertexShader_cubeMap );
     if( FAILED( hr ) )
     {    
+        pVSBlob_cubeMap->Release();
+        return hr;
+    }
+
+    ID3DBlob* pVSBlob = nullptr;
+    hr = CompileShaderFromFile(L"Tutorial07.fx", "VS", "vs_4_0", &pVSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the vertex shader
+    hr = g_pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader);
+    if (FAILED(hr))
+    {
         pVSBlob->Release();
         return hr;
     }
+
 
     // Define the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -469,18 +503,25 @@ HRESULT InitDevice()
     UINT numElements = ARRAYSIZE( layout );
 
     // Create the input layout
-    hr = g_pd3dDevice->CreateInputLayout( layout, numElements, pVSBlob->GetBufferPointer(),
-                                          pVSBlob->GetBufferSize(), &g_pVertexLayout );
-    pVSBlob->Release();
+    hr = g_pd3dDevice->CreateInputLayout( layout, numElements, pVSBlob_cubeMap->GetBufferPointer(),
+        pVSBlob_cubeMap->GetBufferSize(), &g_pVertexLayout );
+    pVSBlob_cubeMap->Release();
     if( FAILED( hr ) )
         return hr;
+
+    // Create the input layout
+    /*hr = g_pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+        pVSBlob->GetBufferSize(), &g_pVertexLayout);
+    pVSBlob->Release();
+    if (FAILED(hr))
+        return hr;*/
 
     // Set the input layout
     g_pImmediateContext->IASetInputLayout( g_pVertexLayout );
 
     // Compile the pixel shader
-    ID3DBlob* pPSBlob = nullptr;
-    hr = CompileShaderFromFile( L"Tutorial07.fx", "PS_CubeMap", "ps_4_0", &pPSBlob );
+    ID3DBlob* pPSBlob_cubeMap = nullptr;
+    hr = CompileShaderFromFile( L"Tutorial07.fx", "PS_CubeMap", "ps_4_0", &pPSBlob_cubeMap);
     if( FAILED( hr ) )
     {
         MessageBox( nullptr,
@@ -489,9 +530,25 @@ HRESULT InitDevice()
     }
 
     // Create the pixel shader
-    hr = g_pd3dDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader );
-    pPSBlob->Release();
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob_cubeMap->GetBufferPointer(), pPSBlob_cubeMap->GetBufferSize(), nullptr, &g_pPixelShader_cubeMap);
+    pPSBlob_cubeMap->Release();
     if( FAILED( hr ) )
+        return hr;
+
+    // Compile the pixel shader
+    ID3DBlob* pPSBlob = nullptr;
+    hr = CompileShaderFromFile(L"Tutorial07.fx", "PS", "ps_4_0", &pPSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the pixel shader
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader);
+    pPSBlob->Release();
+    if (FAILED(hr))
         return hr;
 
     // Create vertex buffer
@@ -603,7 +660,7 @@ HRESULT InitDevice()
         return hr;
 
     // Load the Texture
-    hr = CreateDDSTextureFromFile( g_pd3dDevice, L"Skymap.dds", nullptr, &g_pTextureRV );
+    hr = CreateDDSTextureFromFile( g_pd3dDevice, L"Skymap.dds", nullptr, &sky_TextureRV );
     if( FAILED( hr ) )
         return hr;
 
@@ -616,13 +673,13 @@ HRESULT InitDevice()
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = g_pd3dDevice->CreateSamplerState( &sampDesc, &g_pSamplerLinear );
+    hr = g_pd3dDevice->CreateSamplerState( &sampDesc, &sky_Sampler );
     if( FAILED( hr ) )
         return hr;
 
     // Initialize the world matrices
     g_World = XMMatrixIdentity();
-
+    g_World_1 = XMMatrixIdentity();
     // Initialize the view matrix
 
     //XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f); //for exercise 4
@@ -631,17 +688,9 @@ HRESULT InitDevice()
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
     g_View = XMMatrixLookAtLH( Eye, At, Up );
 
-    CBNeverChanges cbNeverChanges;
-    cbNeverChanges.mView = XMMatrixTranspose( g_View );
-    g_pImmediateContext->UpdateSubresource( g_pCBNeverChanges, 0, nullptr, &cbNeverChanges, 0, 0 );
-
     // Initialize the projection matrix
     g_Projection = XMMatrixPerspectiveFovLH( XM_PIDIV4, width / (FLOAT)height, 0.01f, 100.0f );
     
-    CBChangeOnResize cbChangesOnResize;
-    cbChangesOnResize.mProjection = XMMatrixTranspose( g_Projection );
-    g_pImmediateContext->UpdateSubresource( g_pCBChangeOnResize, 0, nullptr, &cbChangesOnResize, 0, 0 );
-
     return S_OK;
 }
 
@@ -653,8 +702,8 @@ void CleanupDevice()
 {
     if( g_pImmediateContext ) g_pImmediateContext->ClearState();
 
-    if( g_pSamplerLinear ) g_pSamplerLinear->Release();
-    if( g_pTextureRV ) g_pTextureRV->Release();
+    if( sky_Sampler ) sky_Sampler->Release();
+    if( sky_TextureRV ) sky_TextureRV->Release();
     if( g_pCBNeverChanges ) g_pCBNeverChanges->Release();
     if( g_pCBChangeOnResize ) g_pCBChangeOnResize->Release();
     if( g_pCBChangesEveryFrame ) g_pCBChangesEveryFrame->Release();
@@ -726,7 +775,7 @@ void Render()
     }
 
     // Rotate cube around the origin
-    //g_World = XMMatrixRotationY( 0.5 );
+   
 
     // Modify the color
     g_vMeshColor.x =   -0.0f;
@@ -747,36 +796,66 @@ void Render()
     // Update variables that change once per frame
     //
     CBChangesEveryFrame cb;
+    XMMATRIX mScale_env = XMMatrixScaling(50.3f, 40.3f, 50.3f);
+    g_World = mScale_env;
     cb.mWorld = XMMatrixTranspose( g_World );
     cb.vMeshColor = g_vMeshColor;
     cb.Eye = Eye;
+    CBNeverChanges cbNeverChanges;
+    cbNeverChanges.mView = XMMatrixTranspose(g_View);
+    CBChangeOnResize cbChangesOnResize;
+    cbChangesOnResize.mProjection = XMMatrixTranspose(g_Projection);
+
+    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateSky, 1);
+    g_pImmediateContext->RSSetState(m_rasterizerState_sky);
+    g_pImmediateContext->PSSetSamplers(1, 1, &sky_Sampler);
+    g_pImmediateContext->PSSetShaderResources(1, 1, &sky_TextureRV);
+
+    g_pImmediateContext->UpdateSubresource(g_pCBChangeOnResize, 0, nullptr, &cbChangesOnResize, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pCBNeverChanges, 0, nullptr, &cbNeverChanges, 0, 0);
     g_pImmediateContext->UpdateSubresource( g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0 );
     g_pImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
     g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pCBNeverChanges );
     g_pImmediateContext->VSSetConstantBuffers( 1, 1, &g_pCBChangeOnResize );
     g_pImmediateContext->VSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
     g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
-    g_pImmediateContext->PSSetConstantBuffers( 2, 1, &g_pCBChangesEveryFrame );
-    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateSky, 1);
-    g_pImmediateContext->RSSetState(m_rasterizerState_sky);
-    g_pImmediateContext->PSSetShaderResources( 1, 1, &g_pTextureRV );
-    g_pImmediateContext->PSSetSamplers( 1, 1, &g_pSamplerLinear );
     g_pImmediateContext->DrawIndexed( 36, 0, 0 );
 
+    //g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateCube, 1);
+    //g_pImmediateContext->RSSetState(m_rasterizerState_cube);
+    //g_pImmediateContext->PSSetSamplers(1, 1, &sky_Sampler);
+    //g_pImmediateContext->PSSetShaderResources(1, 1, &sky_TextureRV);
 
-    cb.mWorld = XMMatrixTranspose(g_World);
-    cb.vMeshColor = g_vMeshColor;
-    cb.Eye = Eye;
-    g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    //g_pImmediateContext->UpdateSubresource(g_pCBChangeOnResize, 0, nullptr, &cbChangesOnResize, 0, 0);
+    //g_pImmediateContext->UpdateSubresource(g_pCBNeverChanges, 0, nullptr, &cbNeverChanges, 0, 0);
+    //g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0);
+    //g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    //g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pCBNeverChanges);
+    //g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pCBChangeOnResize);
+    //g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
+    //g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    //g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    CBChangesEveryFrame cb_1;
+    XMMATRIX mTranslate = XMMatrixTranslation(0.0f, -0.2f, 1.0f);
+    XMMATRIX mScale = XMMatrixScaling(0.7f, 0.7f, 0.7f);
+    g_World_1 = mScale * mTranslate * XMMatrixRotationY(t);
+    cb_1.mWorld = XMMatrixTranspose(g_World_1);
+    cb_1.vMeshColor = g_vMeshColor;
+    cb_1.Eye = Eye;
+    g_pImmediateContext->UpdateSubresource(g_pCBChangeOnResize, 0, nullptr, &cbChangesOnResize, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pCBNeverChanges, 0, nullptr, &cbNeverChanges, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, nullptr, &cb_1, 0, 0);
+    g_pImmediateContext->VSSetShader(g_pVertexShader_cubeMap, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pCBNeverChanges);
     g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pCBChangeOnResize);
     g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateCube, 1); 
+    g_pImmediateContext->PSSetShader(g_pPixelShader_cubeMap, nullptr, 0);
     g_pImmediateContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-    g_pImmediateContext->PSSetShaderResources(1, 1, &g_pTextureRV);
-    g_pImmediateContext->PSSetSamplers(1, 1, &g_pSamplerLinear);
+    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateSky, 1);
+    g_pImmediateContext->RSSetState(m_rasterizerState);
+    g_pImmediateContext->PSSetShaderResources(1, 1, &sky_TextureRV);
+    g_pImmediateContext->PSSetSamplers(1, 1, &sky_Sampler);
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     //
