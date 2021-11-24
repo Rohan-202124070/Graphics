@@ -407,7 +407,7 @@ HRESULT InitDevice()
     g_pImmediateContext->RSSetState(m_rasterizerState_cube);
 
     D3D11_RASTERIZER_DESC restDesc;
-    restDesc.CullMode = D3D11_CULL_FRONT;
+    restDesc.CullMode = D3D11_CULL_BACK;
     restDesc.FillMode = D3D11_FILL_SOLID;
     restDesc.SlopeScaledDepthBias = 0.0f;
     restDesc.ScissorEnable = false;
@@ -415,7 +415,7 @@ HRESULT InitDevice()
     restDesc.DepthBiasClamp = 0.0f;
     restDesc.DepthClipEnable = true;
     restDesc.MultisampleEnable = false;
-    hr = g_pd3dDevice->CreateRasterizerState(&restDesc_cube, &m_rasterizerState);
+    hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState);
     g_pImmediateContext->RSSetState(m_rasterizerState);
 
 
@@ -855,7 +855,7 @@ void Render()
     g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilStateSky, 1);
     g_pImmediateContext->RSSetState(m_rasterizerState);
     g_pImmediateContext->PSSetShaderResources(1, 1, &sky_TextureRV);
-    g_pImmediateContext->PSSetSamplers(1, 1, &sky_Sampler);
+    g_pImmediateContext->PSSetSamplers(0, 1, &sky_Sampler);
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     //

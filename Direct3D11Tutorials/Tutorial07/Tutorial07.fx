@@ -83,7 +83,8 @@ PS_INPUT VS_CubeMap(VS_INPUT input)
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
-{
+{	
+	//exercise 02 - 03
 	return txSkyColor.Sample(sampler_Sky_Linear, input.viewDir);;
 }
 
@@ -108,9 +109,16 @@ float4 PS_CubeMap(PS_INPUT input) : SV_Target
 	//input.Color = txSkyColor.Sample(sampler_Sky_Linear, input.viewDir);
 	//return input.Color;
     
-	float3 viewDir = reflect(input.viewDir, (float3) input.Norm);
-	return txSkyColor.Sample(sampler_Sky_Linear, viewDir);
-    
+	// exercise 02
+	//float3 viewDir = reflect(input.viewDir, (float3) input.Norm);
+	//return txSkyColor.Sample(sampler_Sky_Linear, viewDir);
+	
+	//exrecise 03
+    float3 viewDirection = reflect(input.viewDir, (float3) input.Norm);
+    float3 refDir = refract(viewDirection, (float3) input.Norm, 0.9);
+    float4 skyColor = txSkyColor.Sample(sampler_Sky_Linear, viewDirection);
+    float4 reflColor = txSkyColor.Sample(sampler_Sky_Linear, refDir);
+    return 0.5 * reflColor + 0.5 * skyColor;
 }
 
 

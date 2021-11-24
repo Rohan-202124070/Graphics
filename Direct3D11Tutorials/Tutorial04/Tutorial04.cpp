@@ -32,6 +32,7 @@ struct SimpleVertex
 {
     XMFLOAT3 Pos;
     XMFLOAT4 Color;
+    XMFLOAT2 TexCord;
 };
 
 
@@ -81,6 +82,7 @@ XMMATRIX                g_World1;
 XMMATRIX                g_World2;
 XMMATRIX                g_View_2;
 UINT                    IndexCount;
+ID3D11RasterizerState*  m_rasterizerState = 0;
 XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -372,10 +374,9 @@ HRESULT InitDevice()
     }
 
     // defining ID3D11RasterizerState 
-    ID3D11RasterizerState* m_rasterizerState = 0;
     D3D11_RASTERIZER_DESC restDesc;
     restDesc.CullMode = D3D11_CULL_NONE;
-    restDesc.FillMode = D3D11_FILL_WIREFRAME;
+    restDesc.FillMode = D3D11_FILL_SOLID;
     restDesc.SlopeScaledDepthBias = 0.0f;
     restDesc.ScissorEnable = false;
     restDesc.DepthBias = 0;
@@ -417,6 +418,7 @@ HRESULT InitDevice()
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE(layout);
 
@@ -463,104 +465,104 @@ HRESULT InitDevice()
 
     D3D11_BUFFER_DESC bd = {};
     //-------------------------------------------------------------ground mesh---------------------------------------------------------
-    SimpleVertex verticesDummy[200];
-    int index = 0;
-    float difference = 0.5f;
-    float startingPosition = 1.5f;
-    float starting = 2.0f;
-    for (int i = 0; i < 10; i++) {
+    //SimpleVertex verticesDummy[200];
+    //int index = 0;
+    //float difference = 0.5f;
+    //float startingPosition = 1.5f;
+    //float starting = 2.0f;
+    //for (int i = 0; i < 10; i++) {
 
-        for (int j = 0; j < 10; j++) {
-            if (index <= 9) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 19) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(1.430) * startingPosition, sin(1.361) * starting, -sin(1.413) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 29) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 39) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 49) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(1.413) * startingPosition, sin(0.890) * starting, -sin(0.890) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 59) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 69) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.378) * starting, -sin(1.430) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 79) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (index <= 89) {
-                verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else {
-                verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-                verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //    for (int j = 0; j < 10; j++) {
+    //        if (index <= 9) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 19) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.430) * startingPosition, sin(1.361) * starting, -sin(1.413) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 29) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 39) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 49) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.413) * startingPosition, sin(0.890) * starting, -sin(0.890) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 59) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 69) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.378) * starting, -sin(1.430) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 79) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else if (index <= 89) {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+    //        }
+    //        else {
+    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
+    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 
-            }
-            startingPosition -= 0.25f;
-            index += 1;
-        }
-        starting -= difference;
-        startingPosition = 1.5f;
-    }
+    //        }
+    //        startingPosition -= 0.25f;
+    //        index += 1;
+    //    }
+    //    starting -= difference;
+    //    startingPosition = 1.5f;
+    //}
 
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(verticesDummy);
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bd.CPUAccessFlags = 0;
-    //  bd.MiscFlags = 0;
+    //bd.Usage = D3D11_USAGE_DEFAULT;
+    //bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(verticesDummy);
+    //bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    //bd.CPUAccessFlags = 0;
+    ////  bd.MiscFlags = 0;
 
-    D3D11_SUBRESOURCE_DATA InitData = {};
-    InitData.pSysMem = verticesDummy;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
-    if (FAILED(hr))
-        return hr;
+    //D3D11_SUBRESOURCE_DATA InitData = {};
+    //InitData.pSysMem = verticesDummy;
+    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
+    //if (FAILED(hr))
+    //    return hr;
 
-    // Create index buffer
-    int k = 0;
-    int indicesX[(2 * 10 * 10) + 10];
-    for (int i = 0; i < 10; ++i) {
-        for (int j = 0; j < 10; ++j) {
-            indicesX[k] = (i * 10 + j); //0
-            indicesX[k + 1] = (i + 1) * 10 + j; //10
-            k += 2;
-        }
-        indicesX[k] = -1;
-        k++;
-    }
+    //// Create index buffer
+    //int k = 0;
+    //int indicesX[(2 * 10 * 10) + 10];
+    //for (int i = 0; i < 10; ++i) {
+    //    for (int j = 0; j < 10; ++j) {
+    //        indicesX[k] = (i * 10 + j); //0
+    //        indicesX[k + 1] = (i + 1) * 10 + j; //10
+    //        k += 2;
+    //    }
+    //    indicesX[k] = -1;
+    //    k++;
+    //}
 
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(int) * ARRAYSIZE(indicesX);
-    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    bd.CPUAccessFlags = 0;
-    InitData.pSysMem = indicesX;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
-    if (FAILED(hr))
-        return hr;
+    //bd.Usage = D3D11_USAGE_DEFAULT;
+    //bd.ByteWidth = sizeof(int) * ARRAYSIZE(indicesX);
+    //bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    //bd.CPUAccessFlags = 0;
+    //InitData.pSysMem = indicesX;
+    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
+    //if (FAILED(hr))
+    //    return hr;
 
-    // Initialize the world matrix
-    g_World = XMMatrixIdentity();
+    //// Initialize the world matrix
+    //g_World = XMMatrixIdentity();
 
-    // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet(1, 1.0f, 1.2f, 0.0f);
-    XMVECTOR At = XMVectorSet(-1.2f, 0.2f, 0.4f, 0.0f);
-    XMVECTOR Up = XMVectorSet(0.1f, -0.15f, 0.2f, 0.0f);
-    g_View = XMMatrixLookAtLH(Eye, At, Up);
+    //// Initialize the view matrix
+    //XMVECTOR Eye = XMVectorSet(1, 1.0f, 1.2f, 0.0f);
+    //XMVECTOR At = XMVectorSet(-1.2f, 0.2f, 0.4f, 0.0f);
+    //XMVECTOR Up = XMVectorSet(0.1f, -0.15f, 0.2f, 0.0f);
+    //g_View = XMMatrixLookAtLH(Eye, At, Up);
     //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -568,20 +570,35 @@ HRESULT InitDevice()
 
     //-------------------------------------------------------------box---------------------------------------------------------
     // Create vertex buffer
-    SimpleVertex vertices[] =
-    {
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    };
+    SimpleVertex vertices[120];
+    //{
+    //   /* { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+    //    { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },*/
+
+    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f)},
+    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+    //};
+
+
+
+    for (int i = 0; i < 30; i++) {
+        float paticleId = (float)i / 30;
+        vertices[i * 4] = { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) };
+        vertices[i * 4 + 1] = { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) };
+        vertices[i * 4 + 2] = { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) };
+        vertices[i * 4 + 3] = { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) };
+    }
 
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * 8;
+    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(vertices);
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = 0;
 
@@ -597,23 +614,9 @@ HRESULT InitDevice()
         3,1,0,
         2,1,3,
 
-        0,5,4,
-        1,5,0,
-
-        3,4,7,
-        0,4,3,
-
-        1,6,5,
-        2,6,1,
-
-        2,7,6,
-        3,7,2,
-
-        6,4,5,
-        7,4,6,
     };
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * 36;
+    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(indices);
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     bd.CPUAccessFlags = 0;
     InitData_1.pSysMem = indices;
@@ -633,106 +636,106 @@ HRESULT InitDevice()
 
     //------------------------------------------------------------sphere----------------------------------------------------------
 
-    SimpleVertex sphere_vertices[401];
-     float radius = 2.0f;
-      int stackCount = 20;
-      int sliceCount = 20;
-      float phiStep = (float)XM_PI / stackCount;
-      float thetaStep = 2.0f * (float)XM_PI / sliceCount;
-      int sphere_vertex_index = 0;
-      XMFLOAT3 Pos;
-      Pos.x = 0.0f;
-      Pos.y = +radius;
-      Pos.z = 0.0f;
+    //SimpleVertex sphere_vertices[401];
+    // float radius = 2.0f;
+    //  int stackCount = 20;
+    //  int sliceCount = 20;
+    //  float phiStep = (float)XM_PI / stackCount;
+    //  float thetaStep = 2.0f * (float)XM_PI / sliceCount;
+    //  int sphere_vertex_index = 0;
+    //  XMFLOAT3 Pos;
+    //  Pos.x = 0.0f;
+    //  Pos.y = +radius;
+    //  Pos.z = 0.0f;
 
-      sphere_vertices[sphere_vertex_index].Pos = Pos;
-      sphere_vertex_index++;
-      for (int i = 1; i <= stackCount - 1; i++) {
-          float phi = i * phiStep;
-          for (int j = 0; j <= sliceCount; j++) {
-              float theta = j * thetaStep;
-              XMFLOAT3 Pos;
-              Pos.x = radius * sin(phi) * cos(theta);
-              Pos.y = radius * cos(phi);
-              Pos.z = radius* sin(phi)* sin(theta);
-              sphere_vertices[sphere_vertex_index].Pos = Pos;
-              sphere_vertex_index++;
-          }
-      }
-      Pos.x = 0.0f;
-      Pos.y = -radius;
-      Pos.z = 0.0f;
-      sphere_vertices[sphere_vertex_index].Pos = Pos;
+    //  sphere_vertices[sphere_vertex_index].Pos = Pos;
+    //  sphere_vertex_index++;
+    //  for (int i = 1; i <= stackCount - 1; i++) {
+    //      float phi = i * phiStep;
+    //      for (int j = 0; j <= sliceCount; j++) {
+    //          float theta = j * thetaStep;
+    //          XMFLOAT3 Pos;
+    //          Pos.x = radius * sin(phi) * cos(theta);
+    //          Pos.y = radius * cos(phi);
+    //          Pos.z = radius* sin(phi)* sin(theta);
+    //          sphere_vertices[sphere_vertex_index].Pos = Pos;
+    //          sphere_vertex_index++;
+    //      }
+    //  }
+    //  Pos.x = 0.0f;
+    //  Pos.y = -radius;
+    //  Pos.z = 0.0f;
+    //  sphere_vertices[sphere_vertex_index].Pos = Pos;
 
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(sphere_vertices);
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bd.CPUAccessFlags = 0;
+    //bd.Usage = D3D11_USAGE_DEFAULT;
+    //bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(sphere_vertices);
+    //bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    //bd.CPUAccessFlags = 0;
 
-    D3D11_SUBRESOURCE_DATA InitData_2 = {};
-    InitData_2.pSysMem = sphere_vertices;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pVertexBuffer_2);
-    if (FAILED(hr))
-        return hr;
-
-
-    WORD sphere_indices[2280];
-    int indices_index = 0;
-    for (auto i = 1; i <= sliceCount; ++i)
-    {
-        sphere_indices[indices_index]= 0;
-        sphere_indices[indices_index + 1] = i+1;
-        sphere_indices[indices_index + 2] = i;
-        indices_index += 3;
-    }
+    //D3D11_SUBRESOURCE_DATA InitData_2 = {};
+    //InitData_2.pSysMem = sphere_vertices;
+    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pVertexBuffer_2);
+    //if (FAILED(hr))
+    //    return hr;
 
 
-    auto baseIndex = 1;
-    auto ringVertexCount = sliceCount + 1;
-    for (auto i = 0; i < stackCount - 2; ++i)
-    {
-        for (auto j = 0; j < sliceCount; ++j)
-        {
-            sphere_indices[indices_index] = (baseIndex + i * ringVertexCount + j);
-            sphere_indices[indices_index +1] = (baseIndex + i * ringVertexCount + j + 1);
-            sphere_indices[indices_index +2] = (baseIndex + (i + 1) * ringVertexCount + j);
+    //WORD sphere_indices[2280];
+    //int indices_index = 0;
+    //for (auto i = 1; i <= sliceCount; ++i)
+    //{
+    //    sphere_indices[indices_index]= 0;
+    //    sphere_indices[indices_index + 1] = i+1;
+    //    sphere_indices[indices_index + 2] = i;
+    //    indices_index += 3;
+    //}
 
-            sphere_indices[indices_index +3] = (baseIndex + (i + 1) * ringVertexCount + j);
-            sphere_indices[indices_index +4] = (baseIndex + i * ringVertexCount + j + 1);
-            sphere_indices[indices_index +5] = (baseIndex + (i + 1) * ringVertexCount + j + 1);
-            indices_index += 6;
-        }
-    }
-    auto southPoleIndex = ARRAYSIZE(sphere_vertices) - 1;
-    // Offset the indices to the index of the first vertex in the last ring.
-    baseIndex = southPoleIndex - ringVertexCount;
-    for (auto i = 0; i < sliceCount; ++i)
-    {
-        sphere_indices[indices_index] = (southPoleIndex);
-        sphere_indices[indices_index +1] = (baseIndex + i);
-        sphere_indices[indices_index +2] = (baseIndex + i + 1);
-        indices_index += 3;
-    }
 
-    IndexCount = (UINT)ARRAYSIZE(sphere_indices);
+    //auto baseIndex = 1;
+    //auto ringVertexCount = sliceCount + 1;
+    //for (auto i = 0; i < stackCount - 2; ++i)
+    //{
+    //    for (auto j = 0; j < sliceCount; ++j)
+    //    {
+    //        sphere_indices[indices_index] = (baseIndex + i * ringVertexCount + j);
+    //        sphere_indices[indices_index +1] = (baseIndex + i * ringVertexCount + j + 1);
+    //        sphere_indices[indices_index +2] = (baseIndex + (i + 1) * ringVertexCount + j);
 
-    bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(sphere_indices);
-    bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    bd.CPUAccessFlags = 0;
-    InitData_2.pSysMem = sphere_indices;
-    hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pIndexBuffer_2);
-    if (FAILED(hr))
-        return hr;
+    //        sphere_indices[indices_index +3] = (baseIndex + (i + 1) * ringVertexCount + j);
+    //        sphere_indices[indices_index +4] = (baseIndex + i * ringVertexCount + j + 1);
+    //        sphere_indices[indices_index +5] = (baseIndex + (i + 1) * ringVertexCount + j + 1);
+    //        indices_index += 6;
+    //    }
+    //}
+    //auto southPoleIndex = ARRAYSIZE(sphere_vertices) - 1;
+    //// Offset the indices to the index of the first vertex in the last ring.
+    //baseIndex = southPoleIndex - ringVertexCount;
+    //for (auto i = 0; i < sliceCount; ++i)
+    //{
+    //    sphere_indices[indices_index] = (southPoleIndex);
+    //    sphere_indices[indices_index +1] = (baseIndex + i);
+    //    sphere_indices[indices_index +2] = (baseIndex + i + 1);
+    //    indices_index += 3;
+    //}
 
-    // Initialize the world matrix
-    g_World2 = XMMatrixIdentity();
+    //IndexCount = (UINT)ARRAYSIZE(sphere_indices);
 
-    // Initialize the view matrix
-    XMVECTOR Eye_2 = XMVectorSet(0.0f, 1.0f, -6.0f, 0.0f);
-    XMVECTOR At_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    g_View_2 = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
+    //bd.Usage = D3D11_USAGE_DEFAULT;
+    //bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(sphere_indices);
+    //bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    //bd.CPUAccessFlags = 0;
+    //InitData_2.pSysMem = sphere_indices;
+    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pIndexBuffer_2);
+    //if (FAILED(hr))
+    //    return hr;
+
+    //// Initialize the world matrix
+    //g_World2 = XMMatrixIdentity();
+
+    //// Initialize the view matrix
+    //XMVECTOR Eye_2 = XMVectorSet(0.0f, 1.0f, -6.0f, 0.0f);
+    //XMVECTOR At_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    //XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    //g_View_2 = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
 
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -834,7 +837,7 @@ void Render()
     //
     // Animate the cube
     //
-    g_World = XMMatrixRotationY(0.5);
+    g_World1 = XMMatrixRotationY(t);
 
     //
     // Clear the back buffer
@@ -843,7 +846,7 @@ void Render()
 
 
     //for the ground
-    ConstantBuffer cb;
+   /* ConstantBuffer cb;
     XMMATRIX mScale = XMMatrixScaling(-6.2f, 2.5f, -3.0f);
     g_World = XMMatrixIdentity();
     g_World *= mScale;
@@ -859,14 +862,11 @@ void Render()
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed(188, 0, 0);
+    g_pImmediateContext->DrawIndexed(188, 0, 0);*/
 
     //for Box
     ConstantBuffer cb_1;
-    XMMATRIX mScale1 = XMMatrixScaling(0.4f, 1.0f, 0.6f);
-    XMMATRIX mTranslate1 = XMMatrixTranslation(-14.0f, 1.0f, -1.0f);
     g_World1 = XMMatrixIdentity();
-    g_World1 *= mTranslate1 * mScale1;
     cb_1.mWorld = XMMatrixTranspose(g_World1);
     cb_1.mView = XMMatrixTranspose(g_View_1);
     cb_1.mProjection = XMMatrixTranspose(g_Projection);
@@ -877,36 +877,36 @@ void Render()
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R16_UINT, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_1, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pConstantBuffer);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
+    g_pImmediateContext->DrawIndexed(6, 0, 0);
 
 
-    ConstantBuffer cb_2;
-    g_World2 = XMMatrixIdentity();
-    //for bouncing
-    //XMMATRIX mTranslate2 = XMMatrixTranslation(0, sin(t) * 0.5, 0.0f);
+    //ConstantBuffer cb_2;
+    //g_World2 = XMMatrixIdentity();
+    ////for bouncing
+    ////XMMATRIX mTranslate2 = XMMatrixTranslation(0, sin(t) * 0.5, 0.0f);
 
-    //for flying
-    XMMATRIX mScale2 = XMMatrixScaling(0.4f, 0.3f, 0.6f);
-    XMMATRIX mTranslate2 = XMMatrixTranslation(2 * sin(t), 1 + sin(t), 0.0f);
+    ////for flying
+    //XMMATRIX mScale2 = XMMatrixScaling(0.4f, 0.3f, 0.6f);
+    //XMMATRIX mTranslate2 = XMMatrixTranslation(2 * sin(t), 1 + sin(t), 0.0f);
 
-    cb_2.mWorld = XMMatrixTranspose(g_World2);
-    cb_2.mView = XMMatrixTranspose(g_View_2);
-    cb_2.mProjection = XMMatrixTranspose(g_Projection);
-    cb_2.mTranslation = XMMatrixTranspose(mTranslate2);
-    cb_2.mScale = mScale2;
-    cb_2.vTime = XMFLOAT4(t, 0, 0 ,0);
-    UINT stride2 = sizeof(SimpleVertex);
-    UINT offset2 = 0;
-    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_2, &stride2, &offset2);
-    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_2, DXGI_FORMAT_R16_UINT, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_2, 0, 0);
-    g_pImmediateContext->VSSetShader(g_pVertexShader_sphere, nullptr, 0);
-    g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pConstantBuffer);
-    g_pImmediateContext->PSSetShader(g_pPixelShader_sphere, nullptr, 0);
-    g_pImmediateContext->DrawIndexedInstanced(IndexCount, 1, 0, 0, 0);
+    //cb_2.mWorld = XMMatrixTranspose(g_World2);
+    //cb_2.mView = XMMatrixTranspose(g_View_2);
+    //cb_2.mProjection = XMMatrixTranspose(g_Projection);
+    //cb_2.mTranslation = XMMatrixTranspose(mTranslate2);
+    //cb_2.mScale = mScale2;
+    //cb_2.vTime = XMFLOAT4(t, 0, 0 ,0);
+    //UINT stride2 = sizeof(SimpleVertex);
+    //UINT offset2 = 0;
+    //g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    //g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_2, &stride2, &offset2);
+    //g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_2, DXGI_FORMAT_R16_UINT, 0);
+    //g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_2, 0, 0);
+    //g_pImmediateContext->VSSetShader(g_pVertexShader_sphere, nullptr, 0);
+    //g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pConstantBuffer);
+    //g_pImmediateContext->PSSetShader(g_pPixelShader_sphere, nullptr, 0);
+    //g_pImmediateContext->DrawIndexedInstanced(IndexCount, 1, 0, 0, 0);
 
 
     //
