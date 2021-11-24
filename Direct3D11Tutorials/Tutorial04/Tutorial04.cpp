@@ -17,6 +17,7 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
+#include "DDSTextureLoader.h"
 #include <d3d11.h>
 #include "resource.h"
 
@@ -83,6 +84,8 @@ XMMATRIX                g_World2;
 XMMATRIX                g_View_2;
 UINT                    IndexCount;
 ID3D11RasterizerState*  m_rasterizerState = 0;
+ID3D11ShaderResourceView* _TextureRV = nullptr;
+ID3D11SamplerState* _Sampler = nullptr;
 XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -418,7 +421,7 @@ HRESULT InitDevice()
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE(layout);
 
@@ -463,138 +466,34 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
+    // Load the Texture
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rocks.DDS", nullptr, &_TextureRV);
+    if (FAILED(hr))
+        return hr;
+
+    // Create the sample state
+    D3D11_SAMPLER_DESC sampDesc = {};
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = g_pd3dDevice->CreateSamplerState(&sampDesc, &_Sampler);
+    if (FAILED(hr))
+        return hr;
+
     D3D11_BUFFER_DESC bd = {};
-    //-------------------------------------------------------------ground mesh---------------------------------------------------------
-    //SimpleVertex verticesDummy[200];
-    //int index = 0;
-    //float difference = 0.5f;
-    //float startingPosition = 1.5f;
-    //float starting = 2.0f;
-    //for (int i = 0; i < 10; i++) {
-
-    //    for (int j = 0; j < 10; j++) {
-    //        if (index <= 9) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 19) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.430) * startingPosition, sin(1.361) * starting, -sin(1.413) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 29) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 39) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 49) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.413) * startingPosition, sin(0.890) * starting, -sin(0.890) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 59) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 69) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.890) * startingPosition, sin(1.378) * starting, -sin(1.430) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 79) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(1.413) * starting, -sin(0.994) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else if (index <= 89) {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(0.994) * startingPosition, sin(0.994) * starting, -sin(0.890) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-    //        }
-    //        else {
-    //            verticesDummy[index].Pos = XMFLOAT3(sin(1.361) * startingPosition, sin(0.890) * starting, -sin(1.361) * startingPosition);
-    //            verticesDummy[index].Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-
-    //        }
-    //        startingPosition -= 0.25f;
-    //        index += 1;
-    //    }
-    //    starting -= difference;
-    //    startingPosition = 1.5f;
-    //}
-
-    //bd.Usage = D3D11_USAGE_DEFAULT;
-    //bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(verticesDummy);
-    //bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    //bd.CPUAccessFlags = 0;
-    ////  bd.MiscFlags = 0;
-
-    //D3D11_SUBRESOURCE_DATA InitData = {};
-    //InitData.pSysMem = verticesDummy;
-    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer);
-    //if (FAILED(hr))
-    //    return hr;
-
-    //// Create index buffer
-    //int k = 0;
-    //int indicesX[(2 * 10 * 10) + 10];
-    //for (int i = 0; i < 10; ++i) {
-    //    for (int j = 0; j < 10; ++j) {
-    //        indicesX[k] = (i * 10 + j); //0
-    //        indicesX[k + 1] = (i + 1) * 10 + j; //10
-    //        k += 2;
-    //    }
-    //    indicesX[k] = -1;
-    //    k++;
-    //}
-
-    //bd.Usage = D3D11_USAGE_DEFAULT;
-    //bd.ByteWidth = sizeof(int) * ARRAYSIZE(indicesX);
-    //bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    //bd.CPUAccessFlags = 0;
-    //InitData.pSysMem = indicesX;
-    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer);
-    //if (FAILED(hr))
-    //    return hr;
-
-    //// Initialize the world matrix
-    //g_World = XMMatrixIdentity();
-
-    //// Initialize the view matrix
-    //XMVECTOR Eye = XMVectorSet(1, 1.0f, 1.2f, 0.0f);
-    //XMVECTOR At = XMVectorSet(-1.2f, 0.2f, 0.4f, 0.0f);
-    //XMVECTOR Up = XMVectorSet(0.1f, -0.15f, 0.2f, 0.0f);
-    //g_View = XMMatrixLookAtLH(Eye, At, Up);
-    //----------------------------------------------------------------------------------------------------------------------
-
-
-
-
-    //-------------------------------------------------------------box---------------------------------------------------------
     // Create vertex buffer
-    SimpleVertex vertices[120];
-    //{
-    //   /* { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-    //    { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },*/
+    SimpleVertex vertices[1200];
 
-    //    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-    //    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f)},
-    //    { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-    //    { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-    //};
-
-
-
-    for (int i = 0; i < 30; i++) {
-        float paticleId = (float)i / 30;
-        vertices[i * 4] = { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) };
-        vertices[i * 4 + 1] = { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) };
-        vertices[i * 4 + 2] = { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) };
-        vertices[i * 4 + 3] = { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) };
+    for (int i = 0; i < 300; i++) {
+        float paticleId =  2 * (float)i / 300;
+        vertices[i * 4] = { XMFLOAT3(-1.0f, -1.0f, -paticleId), XMFLOAT4(1.0f, .0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) };
+        vertices[i * 4 + 1] = { XMFLOAT3(1.0f, -1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) };
+        vertices[i * 4 + 2] = { XMFLOAT3(1.0f, 1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) };
+        vertices[i * 4 + 3] = { XMFLOAT3(-1.0f, 1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) };
     }
 
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -614,12 +513,27 @@ HRESULT InitDevice()
         3,1,0,
         2,1,3,
 
+       // 4,2,1,3,2,4,
+
     };
+
+    int k = 0;
+    int indicesX[300 * 6];
+    for (int i = 0; i < 300; ++i) {
+        indicesX[k] = i + 3;
+        indicesX[k + 1] = i + 1;
+        indicesX[k + 2] = i;
+        indicesX[k + 3] = i + 2;
+        indicesX[k + 4] = i + 1;
+        indicesX[k + 5] = i + 3;
+        k += 6;
+    }
+
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(indices);
+    bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(indicesX);
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     bd.CPUAccessFlags = 0;
-    InitData_1.pSysMem = indices;
+    InitData_1.pSysMem = indicesX;
     hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_1, &g_pIndexBuffer_1);
     if (FAILED(hr))
         return hr;
@@ -632,113 +546,7 @@ HRESULT InitDevice()
     XMVECTOR At_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR Up_1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_View_1 = XMMatrixLookAtLH(Eye_1, At_1, Up_1);
-    //----------------------------------------------------------------------------------------------------------------------
-
-    //------------------------------------------------------------sphere----------------------------------------------------------
-
-    //SimpleVertex sphere_vertices[401];
-    // float radius = 2.0f;
-    //  int stackCount = 20;
-    //  int sliceCount = 20;
-    //  float phiStep = (float)XM_PI / stackCount;
-    //  float thetaStep = 2.0f * (float)XM_PI / sliceCount;
-    //  int sphere_vertex_index = 0;
-    //  XMFLOAT3 Pos;
-    //  Pos.x = 0.0f;
-    //  Pos.y = +radius;
-    //  Pos.z = 0.0f;
-
-    //  sphere_vertices[sphere_vertex_index].Pos = Pos;
-    //  sphere_vertex_index++;
-    //  for (int i = 1; i <= stackCount - 1; i++) {
-    //      float phi = i * phiStep;
-    //      for (int j = 0; j <= sliceCount; j++) {
-    //          float theta = j * thetaStep;
-    //          XMFLOAT3 Pos;
-    //          Pos.x = radius * sin(phi) * cos(theta);
-    //          Pos.y = radius * cos(phi);
-    //          Pos.z = radius* sin(phi)* sin(theta);
-    //          sphere_vertices[sphere_vertex_index].Pos = Pos;
-    //          sphere_vertex_index++;
-    //      }
-    //  }
-    //  Pos.x = 0.0f;
-    //  Pos.y = -radius;
-    //  Pos.z = 0.0f;
-    //  sphere_vertices[sphere_vertex_index].Pos = Pos;
-
-    //bd.Usage = D3D11_USAGE_DEFAULT;
-    //bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(sphere_vertices);
-    //bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    //bd.CPUAccessFlags = 0;
-
-    //D3D11_SUBRESOURCE_DATA InitData_2 = {};
-    //InitData_2.pSysMem = sphere_vertices;
-    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pVertexBuffer_2);
-    //if (FAILED(hr))
-    //    return hr;
-
-
-    //WORD sphere_indices[2280];
-    //int indices_index = 0;
-    //for (auto i = 1; i <= sliceCount; ++i)
-    //{
-    //    sphere_indices[indices_index]= 0;
-    //    sphere_indices[indices_index + 1] = i+1;
-    //    sphere_indices[indices_index + 2] = i;
-    //    indices_index += 3;
-    //}
-
-
-    //auto baseIndex = 1;
-    //auto ringVertexCount = sliceCount + 1;
-    //for (auto i = 0; i < stackCount - 2; ++i)
-    //{
-    //    for (auto j = 0; j < sliceCount; ++j)
-    //    {
-    //        sphere_indices[indices_index] = (baseIndex + i * ringVertexCount + j);
-    //        sphere_indices[indices_index +1] = (baseIndex + i * ringVertexCount + j + 1);
-    //        sphere_indices[indices_index +2] = (baseIndex + (i + 1) * ringVertexCount + j);
-
-    //        sphere_indices[indices_index +3] = (baseIndex + (i + 1) * ringVertexCount + j);
-    //        sphere_indices[indices_index +4] = (baseIndex + i * ringVertexCount + j + 1);
-    //        sphere_indices[indices_index +5] = (baseIndex + (i + 1) * ringVertexCount + j + 1);
-    //        indices_index += 6;
-    //    }
-    //}
-    //auto southPoleIndex = ARRAYSIZE(sphere_vertices) - 1;
-    //// Offset the indices to the index of the first vertex in the last ring.
-    //baseIndex = southPoleIndex - ringVertexCount;
-    //for (auto i = 0; i < sliceCount; ++i)
-    //{
-    //    sphere_indices[indices_index] = (southPoleIndex);
-    //    sphere_indices[indices_index +1] = (baseIndex + i);
-    //    sphere_indices[indices_index +2] = (baseIndex + i + 1);
-    //    indices_index += 3;
-    //}
-
-    //IndexCount = (UINT)ARRAYSIZE(sphere_indices);
-
-    //bd.Usage = D3D11_USAGE_DEFAULT;
-    //bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(sphere_indices);
-    //bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    //bd.CPUAccessFlags = 0;
-    //InitData_2.pSysMem = sphere_indices;
-    //hr = g_pd3dDevice->CreateBuffer(&bd, &InitData_2, &g_pIndexBuffer_2);
-    //if (FAILED(hr))
-    //    return hr;
-
-    //// Initialize the world matrix
-    //g_World2 = XMMatrixIdentity();
-
-    //// Initialize the view matrix
-    //XMVECTOR Eye_2 = XMVectorSet(0.0f, 1.0f, -6.0f, 0.0f);
-    //XMVECTOR At_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    //XMVECTOR Up_2 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    //g_View_2 = XMMatrixLookAtLH(Eye_2, At_2, Up_2);
-
-    //----------------------------------------------------------------------------------------------------------------------
-
+   
      // Create the constant buffer
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(ConstantBuffer);
@@ -866,20 +674,23 @@ void Render()
 
     //for Box
     ConstantBuffer cb_1;
-    g_World1 = XMMatrixIdentity();
+    XMMATRIX mTranslate = XMMatrixTranslation(0.0f, -0.2f, 0.0f);
+    g_World1 = XMMatrixIdentity() *XMMatrixRotationY(t);
     cb_1.mWorld = XMMatrixTranspose(g_World1);
     cb_1.mView = XMMatrixTranspose(g_View_1);
     cb_1.mProjection = XMMatrixTranspose(g_Projection);
     UINT stride1 = sizeof(SimpleVertex);
     UINT offset1 = 0;
-    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride1, &offset1);
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R16_UINT, 0);
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb_1, 0, 0);
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->DrawIndexed(6, 0, 0);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &_TextureRV);
+    g_pImmediateContext->PSSetSamplers(0, 1, &_Sampler);
+    g_pImmediateContext->DrawIndexed(300 * 6, 0, 0);
 
 
     //ConstantBuffer cb_2;
