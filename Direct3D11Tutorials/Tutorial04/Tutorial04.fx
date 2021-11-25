@@ -47,9 +47,9 @@ PS_INPUT VS(VS_INPUT input)
 	float3 viewUp = View._12_22_32;
 	float4 inPos = input.Pos;
 	inPos.xyz = inPos.x * viewLeft + inPos.y * viewUp;
-	inPos *= 0.1;
-	float4 particlePos = input.Pos.z;
-	inPos += particlePos;
+	inPos *= 0.5;
+	float3 particlePos = (float3) input.Pos.z;
+	inPos += float4(particlePos, 1.0) ;
     output.Pos = mul(inPos, World);
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);
@@ -80,6 +80,7 @@ PS_INPUT VS_Sphere(VS_INPUT input)
 float4 PS(PS_INPUT input) : SV_Target
 {
 	return txDiffuse.Sample(samLinear, input.Tex);
+	//return input.Color;
 }
 
 

@@ -87,6 +87,10 @@ ID3D11RasterizerState*  m_rasterizerState = 0;
 ID3D11ShaderResourceView* _TextureRV = nullptr;
 ID3D11SamplerState* _Sampler = nullptr;
 XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
+ID3D11DepthStencilState* g_pDepthStencilState = nullptr;
+ID3D11BlendState*        g_pBlendState = nullptr;
+ID3D11Texture2D* g_pDepthStencil = nullptr;
+ID3D11DepthStencilView* g_pDepthStencilView = nullptr;
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
@@ -390,6 +394,64 @@ HRESULT InitDevice()
     hr = g_pd3dDevice->CreateRasterizerState(&restDesc, &m_rasterizerState);
     g_pImmediateContext->RSSetState(m_rasterizerState);
 
+
+    // Create depth stencil texture
+    D3D11_TEXTURE2D_DESC descDepth = {};
+    descDepth.Width = width;
+    descDepth.Height = height;
+    descDepth.MipLevels = 1;
+    descDepth.ArraySize = 1;
+    descDepth.Format = DXGI_FORMAT_D32_FLOAT;
+    descDepth.SampleDesc.Count = 1;
+    descDepth.SampleDesc.Quality = 0;
+    descDepth.Usage = D3D11_USAGE_DEFAULT;
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    descDepth.CPUAccessFlags = 0;
+    descDepth.MiscFlags = 0;
+    hr = g_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &g_pDepthStencil);
+    if (FAILED(hr))
+        return hr;
+
+    // Create the depth stencil view
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+    descDSV.Format = descDepth.Format;
+    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSV.Texture2D.MipSlice = 0;
+    hr = g_pd3dDevice->CreateDepthStencilView(g_pDepthStencil, &descDSV, &g_pDepthStencilView);
+    if (FAILED(hr))
+        return hr;
+    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
+
+
+    D3D11_DEPTH_STENCIL_DESC deDepth;
+    //Depth test parameters
+    deDepth.DepthEnable = false;
+    deDepth.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    deDepth.DepthFunc = D3D11_COMPARISON_LESS;
+
+    //stencil test parameters
+    deDepth.StencilEnable = false;
+    deDepth.StencilReadMask = 0xFF;
+    deDepth.StencilWriteMask = 0xFF;
+
+    //deDepth.DepthEnable = true;
+    hr = g_pd3dDevice->CreateDepthStencilState(&deDepth, &g_pDepthStencilState);
+    if (FAILED(hr))
+        return hr;
+
+    D3D11_BLEND_DESC blendState;
+    ZeroMemory(&blendState, sizeof(D3D11_BLEND_DESC));
+    blendState.RenderTarget[0].BlendEnable = TRUE;
+    blendState.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+    blendState.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+    blendState.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blendState.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendState.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    blendState.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendState.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+
+    hr = g_pd3dDevice->CreateBlendState(&blendState, &g_pBlendState);
+
     // Create the vertex shader
     hr = g_pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader);
     if (FAILED(hr))
@@ -490,10 +552,10 @@ HRESULT InitDevice()
 
     for (int i = 0; i < 300; i++) {
         float paticleId =  2 * (float)i / 300;
-        vertices[i * 4] = { XMFLOAT3(-1.0f, -1.0f, -paticleId), XMFLOAT4(1.0f, .0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) };
-        vertices[i * 4 + 1] = { XMFLOAT3(1.0f, -1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) };
-        vertices[i * 4 + 2] = { XMFLOAT3(1.0f, 1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) };
-        vertices[i * 4 + 3] = { XMFLOAT3(-1.0f, 1.0f, -paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) };
+        vertices[i * 4] = { XMFLOAT3(-1.0f, -1.0f, paticleId), XMFLOAT4(1.0f, .0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) };
+        vertices[i * 4 + 1] = { XMFLOAT3(1.0f, -1.0f, paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) };
+        vertices[i * 4 + 2] = { XMFLOAT3(1.0f, 1.0f, paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) };
+        vertices[i * 4 + 3] = { XMFLOAT3(-1.0f, 1.0f, paticleId), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) };
     }
 
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -645,7 +707,7 @@ void Render()
     //
     // Animate the cube
     //
-    g_World1 = XMMatrixRotationY(t);
+  //  g_World1 = XMMatrixRotationY(t);
 
     //
     // Clear the back buffer
@@ -674,13 +736,15 @@ void Render()
 
     //for Box
     ConstantBuffer cb_1;
-    XMMATRIX mTranslate = XMMatrixTranslation(0.0f, -0.2f, 0.0f);
-    g_World1 = XMMatrixIdentity() *XMMatrixRotationY(t);
+    XMMATRIX mTranslate = XMMatrixTranslation(0.0f, 0.5f, -4.0f);
+    g_World1 = XMMatrixIdentity() * mTranslate;
     cb_1.mWorld = XMMatrixTranspose(g_World1);
     cb_1.mView = XMMatrixTranspose(g_View_1);
     cb_1.mProjection = XMMatrixTranspose(g_Projection);
     UINT stride1 = sizeof(SimpleVertex);
     UINT offset1 = 0;
+    cb_1.vTime.x = t;
+    g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilState, 1);
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride1, &offset1);
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R16_UINT, 0);
