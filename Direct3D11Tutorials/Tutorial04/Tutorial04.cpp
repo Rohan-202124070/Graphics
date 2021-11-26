@@ -439,18 +439,25 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-    D3D11_BLEND_DESC blendState;
-    ZeroMemory(&blendState, sizeof(D3D11_BLEND_DESC));
-    blendState.RenderTarget[0].BlendEnable = TRUE;
-    blendState.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-    blendState.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-    blendState.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    blendState.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    blendState.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-    blendState.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    blendState.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+    D3D11_BLEND_DESC blendStateDesc;
+    ZeroMemory(&blendStateDesc, sizeof(D3D11_BLEND_DESC));
 
-    hr = g_pd3dDevice->CreateBlendState(&blendState, &g_pBlendState);
+    D3D11_RENDER_TARGET_BLEND_DESC blendState;
+    ZeroMemory(&blendState, sizeof(blendState));
+
+    blendState.BlendEnable = TRUE;
+    blendState.SrcBlend = D3D11_BLEND_SRC_COLOR;
+    blendState.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+    blendState.BlendOp = D3D11_BLEND_OP_ADD;
+    blendState.SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendState.DestBlendAlpha = D3D11_BLEND_ZERO;
+    blendState.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendState.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+    blendStateDesc.AlphaToCoverageEnable = false;
+    blendStateDesc.RenderTarget[0] = blendState;
+
+    hr = g_pd3dDevice->CreateBlendState(&blendStateDesc, &g_pBlendState);
 
     // Create the vertex shader
     hr = g_pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader);
@@ -529,7 +536,7 @@ HRESULT InitDevice()
         return hr;
 
     // Load the Texture
-    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rocks.DDS", nullptr, &_TextureRV);
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"Fires.DDS", nullptr, &_TextureRV);
     if (FAILED(hr))
         return hr;
 
@@ -744,7 +751,10 @@ void Render()
     UINT stride1 = sizeof(SimpleVertex);
     UINT offset1 = 0;
     cb_1.vTime.x = t;
+    float blendFactor[4] = { 0.75f, 0.75f, 0.75f, 1.0f };
+    UINT sampleMask = 0xffffffff;
     g_pImmediateContext->OMSetDepthStencilState(g_pDepthStencilState, 1);
+    g_pImmediateContext->OMSetBlendState(g_pBlendState, blendFactor, sampleMask);
     g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer_1, &stride1, &offset1);
     g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer_1, DXGI_FORMAT_R16_UINT, 0);
