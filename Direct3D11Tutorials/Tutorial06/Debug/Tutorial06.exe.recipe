@@ -2,15 +2,15 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06.exe</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06_PS.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06_PS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>\\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06_VS.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06_VS.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

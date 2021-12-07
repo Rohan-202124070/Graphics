@@ -1,5 +1,5 @@
-﻿  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06_PS.cso
-  compilation object save succeeded; see \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06_VS.cso
+﻿  compilation object save succeeded; see C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06_PS.cso
+  compilation object save succeeded; see C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06_VS.cso
   Tutorial06.cpp
 Tutorial06.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
-  Tutorial06_2019.vcxproj -> \\adir.hull.ac.uk\home\677\677436\Real Time Graphics\Direct3D11Tutorials\Debug\Tutorial06.exe
+  Tutorial06_2019.vcxproj -> C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial06.exe

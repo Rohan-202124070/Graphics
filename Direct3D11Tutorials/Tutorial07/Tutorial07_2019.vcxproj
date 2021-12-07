@@ -417,8 +417,10 @@
     <ResourceCompile Include="Tutorial07.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="grasscube1024.dds" />
     <Image Include="seafloor.dds" />
     <Image Include="Skymap.dds" />
+    <Image Include="universe.dds" />
     <Image Include="Wood.dds" />
   </ItemGroup>
   <ItemGroup>

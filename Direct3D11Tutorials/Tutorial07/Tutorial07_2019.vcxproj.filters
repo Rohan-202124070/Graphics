@@ -52,5 +52,11 @@
     <Image Include="Skymap.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="universe.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="grasscube1024.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

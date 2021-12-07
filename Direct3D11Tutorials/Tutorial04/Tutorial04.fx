@@ -57,6 +57,7 @@ PS_INPUT VS(VS_INPUT input)
 	inPos.xyz = inPos.x * viewLeft + inPos.y * viewUp;
 	inPos *= 0.5;
 	float3 particlePos = (float3) input.Pos.z;
+	
     //particlePos = _velocity * _time;
 	inPos += float4(particlePos, 1.0);
 	
@@ -94,7 +95,6 @@ float4 PS(PS_INPUT input) : SV_Target
 {
    // float _smooth =  1.0 - smoothstep(0.0, 0.9, length(input.Tex - 0.5));
     return txDiffuse.Sample(samLinear, input.Tex) * input.fadingRate.x; //* _smooth;
-	//return input.Color;
 }
 
 

@@ -2,21 +2,21 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial07.exe</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial07.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\PS_CubeMap.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\PS_CubeMap.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial07_PS.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial07_PS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\Tutorial07_VS.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\Tutorial07_VS.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Graphics\Direct3D11Tutorials\Debug\VS_CubeMap.cso</FullPath>
+      <FullPath>C:\Adavance Computer Science\Graphics\Direct3D11Tutorials\Debug\VS_CubeMap.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

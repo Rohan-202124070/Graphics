@@ -536,7 +536,7 @@ HRESULT InitDevice()
         return hr;
 
     // Load the Texture
-    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"Fires.DDS", nullptr, &_TextureRV);
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"universe.DDS", nullptr, &_TextureRV);
     if (FAILED(hr))
         return hr;
 
