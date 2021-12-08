@@ -36,11 +36,15 @@ struct SimpleVertex
 struct ConstantBuffer
 {
 	XMMATRIX mWorld;
-	XMMATRIX mView;
+    XMMATRIX mView;
 	XMMATRIX mProjection;
-    XMVECTOR Time;
+    XMFLOAT4 time;
 };
 
+//struct TimeConstantBuffer
+//{
+//    XMFLOAT4 time;
+//};
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -62,6 +66,7 @@ ID3D11InputLayout*      g_pVertexLayout = nullptr;
 ID3D11Buffer*           g_pVertexBuffer = nullptr;
 ID3D11Buffer*           g_pIndexBuffer = nullptr;
 ID3D11Buffer*           g_pConstantBuffer = nullptr;
+ID3D11Buffer* g_pTime_ConstantBuffer = nullptr;
 XMMATRIX                g_World;
 XMMATRIX                g_View;
 XMMATRIX                g_Projection;
@@ -70,6 +75,8 @@ ID3D11RenderTargetView* g_pRenderableTexture_RTV = nullptr;
 ID3D11ShaderResourceView* g_pRenderableTexture_SRV = nullptr;
 ID3D11DepthStencilView* g_pDepthStencilView = nullptr;
 ID3D11ShaderResourceView* _TextureRV = nullptr;
+ID3D11ShaderResourceView* _FireDisTextureRV = nullptr;
+ID3D11ShaderResourceView* _FireBaseTextureRV = nullptr;
 ID3D11SamplerState* _Sampler = nullptr;
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -449,6 +456,15 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"FireBase.DDS", nullptr, &_FireBaseTextureRV);
+    if (FAILED(hr))
+        return hr;
+
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"FireDistortion.DDS", nullptr, &_FireDisTextureRV);
+    if (FAILED(hr))
+        return hr;
+
+
     D3D11_SAMPLER_DESC sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -556,6 +572,10 @@ HRESULT InitDevice()
     if( FAILED( hr ) )
         return hr;
 
+    hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pTime_ConstantBuffer);
+    if (FAILED(hr))
+        return hr;
+
     // Initialize the world matrix
 	g_World = XMMatrixIdentity();
 
@@ -657,17 +677,24 @@ void Render()
 
     g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, nullptr);
    
+
+    //TimeConstantBuffer tcb;
+    //tcb.time.x = t;
+    //g_pImmediateContext->UpdateSubresource(g_pTime_ConstantBuffer, 0, nullptr, &tcb, 0, 0);
+
     ConstantBuffer cb;
-    cb.Time= XMVectorSet(t, 0.0f, 0.0f, 0.0f);
 	cb.mWorld = XMMatrixTranspose( g_World );
 	cb.mView = XMMatrixTranspose( g_View );
 	cb.mProjection = XMMatrixTranspose( g_Projection );
+    cb.time.x = t;
 	g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, nullptr, &cb, 0, 0 );
 
 	g_pImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
 	g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
 	g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
     g_pImmediateContext->PSSetShaderResources(0, 1, &_TextureRV);
+    g_pImmediateContext->PSSetShaderResources(1, 1, &_FireDisTextureRV);
+    g_pImmediateContext->PSSetShaderResources(2, 1, &_FireBaseTextureRV);
     g_pImmediateContext->PSSetSamplers(0, 1, &_Sampler);
 	g_pImmediateContext->DrawIndexed( 36, 0, 0 );     
 

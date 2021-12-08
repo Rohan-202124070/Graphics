@@ -1,2 +1,3 @@
 C:\Tutorial04\Debug\Tutorial04.exe
 C:\Adavance Computer Science\Graphics\Tutorial04\Debug\Tutorial04.exe
+C:\MLSS_AWS2\Graphics\Tutorial04\Debug\Tutorial04.exe

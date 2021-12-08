@@ -11,7 +11,10 @@
 #define  NeighborSize 2
 
 Texture2D txDiffuse : register(t0);
+Texture2D txFireDis : register(t1);
+Texture2D txFireBase : register(t2);
 SamplerState samLinear : register(s0);
+
 cbuffer ConstantBuffer : register( b0 )
 {
 	matrix World;
@@ -34,6 +37,7 @@ struct PS_INPUT
     float4 Pos : SV_POSITION;
     float2 Tex : TEXCOORD0;
     float4 Norm : NORMAL0;
+	float4 Times : TEXCOORD1;
 };
 
 //--------------------------------------------------------------------------------------
@@ -49,6 +53,7 @@ PS_INPUT VS(VS_INPUT input)
     output.Norm.xyz = mul(input.Norm, World).xyz;
     output.Pos = inPos;
     output.Tex = input.Tex;
+	output.Times.x = Time.x;
     return output;
 }
 
@@ -77,7 +82,7 @@ float4 PS(PS_INPUT input) : SV_Target
     //return ColAtST;
     
     //exercise 03
-    float scale = 2.0f;
+   /* float scale = 2.0f;
     float2 XY = input.Tex;
     XY -= 1.5;
     float LocalTr = smoothstep(0.2, 0.6, length(XY));
@@ -92,7 +97,7 @@ float4 PS(PS_INPUT input) : SV_Target
     {
         orignalTexCol = float4(5.0 * glow.xy, 1.5 * glow.z, 1.0);
     }
-    return orignalTexCol;
+    return orignalTexCol;*/
 	
 	//exercise 04
  //   float burnSpeed = 12.5f;
@@ -115,4 +120,18 @@ float4 PS(PS_INPUT input) : SV_Target
  //   float2 pixelSize = float2(1.0 / 1800.0, 1.0 / 1200.0);
  //  // float3 procssedImage = Poisson(float2(1.1f, 1.9f), heatXY, pixelSize, float2(0.1f, 1.9f));
  //   return glow;
+
+    
+	float2 Scale = float2(5.4 * sin(input.Times.x), 3.4 * sin(input.Times.x));
+	float2 freq = float2(1.2 * sin(input.Times.x), 1.5 * sin(input.Times.x));
+    float2 NewTexCoords = input.Tex;
+    
+	NewTexCoords.x = Scale.x * input.Tex.x - 2.5 * input.Times.x;
+	NewTexCoords.y = Scale.y * input.Tex.y - 2.5 * input.Times.x;
+    
+    float4 BasefireDis = txFireDis.Sample(samLinear, NewTexCoords);
+	float4 Basefire = txFireBase.Sample(samLinear, NewTexCoords);
+	float4 _diif = txDiffuse.Sample(samLinear, input.Tex);
+	return Basefire * 0.5 + BasefireDis * 0.5 + _diif ;
+
 }
